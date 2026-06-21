@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Reign — Institute for the Advancement of Dictatorships</title>
+<script data-goatcounter="https://steffenhuck.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+<style>
+  :root{
+    --cream:#e6e7e4; --cream-panel:#dcddd8; --olive:#3d4d20; --olive-deep:#2c3817;
+    --olive-line:#bcc0a8; --olive-soft:#7d8c52; --ink:#2c3817; --ink-dim:#6a7549;
+    --gold:#9a8520; --red:#7c2233; --green:#5a7a28; --amber:#c9a227;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--cream);color:var(--ink);font-family:"Helvetica Neue",Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .frame{max-width:760px;margin:0 auto;min-height:100%;background:var(--cream);display:flex;flex-direction:column}
+  .pad{padding:22px 26px}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  .btn{background:var(--olive);color:var(--cream);padding:12px 20px;font-size:13px;letter-spacing:.04em;font-weight:600;border-radius:3px;transition:background .15s,transform .08s}
+  .btn:hover{background:var(--olive-deep);transform:translateY(-1px)}
+  .btn.ghost{background:transparent;color:var(--olive);border:1px solid var(--olive)}
+  .btn.ghost:hover{background:var(--olive-line)}
+  .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+  /* masthead */
+  header{padding:30px 26px 18px;text-align:center}
+  .eyebrow{text-align:left;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--olive);font-weight:600;line-height:1.6;margin-bottom:16px}
+  .eyebrow span{display:block}
+  .intro-body p{font-size:15px;margin-bottom:14px;max-width:600px}
+  .intro-body em{font-style:italic;color:var(--olive);font-weight:600}
+  .reign-stats{display:flex;justify-content:center;gap:40px;margin-top:8px}
+  .rstat{text-align:center}
+  .rstat-num{font-size:42px;font-weight:800;color:var(--olive);line-height:1.1}
+  .rstat-lab{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim);margin-top:2px}
+  h1{display:inline-block;font-size:clamp(22px,6.5vw,34px);font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--red);padding:14px 26px;border-radius:14px}
+  h1 .sub2{display:block;font-size:clamp(22px,6.5vw,34px);font-weight:700}
+  .sub{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);margin-top:14px}
+
+  /* HUD */
+  .hud{display:flex;justify-content:space-between;align-items:center;padding:14px 26px;border-bottom:2px solid var(--olive);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+  .hud .year{color:var(--ink)}
+  .hud .money{color:var(--olive);font-weight:700}
+
+  /* dials */
+  .console{padding:16px 26px 6px}
+  .console-head{font-size:10px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px}
+  .console-head.threats{color:var(--red)}
+  .console-head.caps{color:var(--olive)}
+  .dials{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .dial-wrap{text-align:center}
+  .dial-label{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);margin-top:2px}
+  .dial-val{font-size:10px;color:var(--ink);font-weight:700}
+
+  /* capability bars */
+  .caps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:4px}
+  .cap{text-align:center}
+  .cap-track{height:6px;background:#dde2bf;border-radius:3px;overflow:hidden;margin-bottom:4px}
+  .cap-fill{height:100%;background:var(--olive);transition:width 1.4s ease-out}
+  .cap-label{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim)}
+  .cap-val{font-size:11px;font-weight:700;color:var(--ink)}
+
+  /* budget allocation */
+  .sectit{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin:18px 0 4px}
+  .alloc{padding:0 26px}
+  .alloc-row{display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px dotted var(--olive-line)}
+  .alloc-name{flex:1;font-size:14px}
+  .alloc-name small{display:block;font-size:11px;color:var(--ink-dim);letter-spacing:0;text-transform:none}
+  .alloc-slider{flex:1.4}
+  input[type=range]{width:100%;accent-color:var(--olive)}
+  .alloc-amt{width:54px;text-align:right;font-weight:700;font-size:14px;color:var(--olive)}
+  .budget-bar{display:flex;justify-content:space-between;align-items:center;padding:12px 26px;background:var(--cream-panel);border-top:1px solid var(--olive-line);border-bottom:1px solid var(--olive-line);margin-top:6px;font-size:13px}
+  .budget-left b{color:var(--olive);font-size:16px}
+  .budget-warn{color:var(--red)}
+
+  /* event card */
+  .card{padding:8px 26px 22px}
+  .card-cat{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+  .card-title{font-size:22px;font-weight:700;margin:4px 0 6px;letter-spacing:.01em}
+  .card-situation{font-size:15px;color:var(--ink);font-style:italic;margin-bottom:16px}
+  .opt{border:1px solid var(--olive-line);border-radius:4px;padding:13px 15px;margin-bottom:10px;cursor:pointer;background:var(--cream-panel);transition:background .14s,border-color .14s,transform .07s}
+  .opt:hover{background:#e6ebc8;border-color:var(--olive);transform:translateY(-1px)}
+  .opt-label{font-size:15px;font-weight:600;margin-bottom:3px}
+  .opt-flavor{font-size:12.5px;color:var(--ink-dim);font-style:italic;margin-bottom:7px}
+  .opt-fx{display:flex;flex-wrap:wrap;gap:7px}
+  .outcome{text-align:center;padding:16px 0 4px}
+  .outcome-choice{font-size:15px;color:var(--ink);margin-bottom:8px}
+  .outcome-choice b{color:var(--olive)}
+  .outcome-flavor{font-size:15px;font-style:italic;color:var(--ink-dim);max-width:460px;margin:0 auto}
+  .outcome-watch{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--olive-soft);margin-top:16px;min-height:16px}
+  .fx{font-size:11px;font-weight:700;letter-spacing:.03em;padding:2px 7px;border-radius:9px}
+  .fx.good{background:#d8e6c0;color:#3a5a1a}
+  .fx.bad{background:#e8cdc4;color:#9a2a14}
+  .card-progress{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-dim);text-align:center;margin-bottom:8px}
+
+  /* challenge */
+  .challenge{padding:30px 26px;text-align:center}
+  .ch-eyebrow{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--red);margin-bottom:8px}
+  .ch-title{font-size:30px;font-weight:700;margin-bottom:14px}
+  .ch-body{font-size:15px;color:var(--ink);margin-bottom:8px}
+  .ch-quiet .ch-title{color:var(--green)}
+
+  /* exit / flee button */
+  .flee-bar{padding:14px 26px;display:flex;justify-content:center;gap:14px;border-top:2px solid var(--olive);margin-top:8px;background:var(--cream-panel)}
+
+  /* end screen */
+  .end{padding:30px 26px}
+  .end .verdict{font-size:13px;letter-spacing:.3em;text-transform:uppercase;margin-bottom:8px}
+  .end .verdict.exile{color:var(--gold)} .end .verdict.fell{color:var(--red)}
+  .end h2{font-size:26px;margin-bottom:14px}
+  .end p{font-size:15px;margin-bottom:14px}
+  .scorecard{border:1px solid var(--olive);border-radius:3px;padding:22px;margin:20px 0;background:var(--cream-panel);text-align:center}
+  .score-lab{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-dim)}
+  .score-hero{font-size:64px;font-weight:800;line-height:1.05;color:var(--olive)}
+  .score-sub{font-size:12px;color:var(--ink-dim);margin-top:8px}
+  .seal{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-dim);text-align:center;padding:16px;border-top:1px solid var(--olive-line)}
+
+  @media(max-width:560px){
+    .dials{grid-template-columns:repeat(2,1fr)}
+    .caps{grid-template-columns:repeat(2,1fr)}
+    .alloc-row{flex-wrap:wrap}
+  }
+</style>
+</head>
+<body>
+<div class="frame" id="app"></div>
+<script>
+const VERSION="0.2.3";
+
+// ---------------- ENGINE PARAMETERS (provisional, 0–100 scale) ----------------
+const P={
+  capStart:40, dangerStart:10, econStart:100,
+  investGain:0.6, investHalf:250, econDecay:0.05, econMax:300,
+  capGain:1.0, capDecay:0.08,
+  driftBase:3, driftAccel:0.7, suppressK:0.10, suppressFloorVsDrift:0.6,
+  guard:{revolution:{MIL:.5,POL:.5}, coup:{ELITE:.6,POL:.4}, assassination:{POL:1}, intervention:{MIL:.5,ELITE:.5}},
+  survK:0.07, foreignDiscount:0.5,
+  // naked looting radicalises the street and unsettles elites — scales with the
+  // SHARE of budget extracted, so 100% extraction is genuinely alarming.
+  extractRevK:18, extractCoupK:6,
+  penalty:{coup:50,revolution:75,intervention:100,assassination:125},
+  penaltyClawFrac:0.35,
+};
+const DNAMES={revolution:"Revolution",coup:"Coup",assassination:"Assassination",intervention:"Intervention"};
+const CNAMES={ECON:"Economy",MIL:"Military",POL:"Secret Police",ELITE:"Elite"};
+const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+const logistic=x=>1/(1+Math.exp(-x));
+
+// ---------------- EVENT CARDS (12) ----------------
+// fx keys: ECON,MIL,POL,ELITE (caps)  REV,COUP,ASSN,INTV (dangers)
+const DKEY={REV:"revolution",COUP:"coup",ASSN:"assassination",INTV:"intervention"};
+const CARDS=[
+ {cat:"Social Unrest",title:"The Students Fill the Square",
+  sit:"Thousands of students have occupied the central square, chanting your name without affection.",
+  opts:[
+   {label:"Send in the police.",flavor:"The square is cleared by dawn — but the cameras were rolling.",fx:{REV:-12,ECON:-6,INTV:6}},
+   {label:"Announce reforms.",flavor:"You concede a few demands; the hardliners are disgusted.",fx:{REV:-6,ELITE:-6,ECON:-6}},
+   {label:"Let them tire.",flavor:"Cheap, if it stays small. Festering, if it doesn't.",fx:{REV:6}},
+  ]},
+ {cat:"Insider Request",title:"The Spymaster Wants More",
+  sit:"The head of the secret police requests sweeping new powers — and a budget to match.",
+  opts:[
+   {label:"Grant everything.",flavor:"A stronger sword; the other barons resent his rise.",fx:{POL:12,ELITE:-6,ECON:-6}},
+   {label:"Grant a token.",flavor:"He notices the leash. So do his rivals.",fx:{POL:6,COUP:6}},
+   {label:"Refuse him.",flavor:"An offended spymaster is a dangerous thing behind you.",fx:{POL:-6,ASSN:6}},
+  ]},
+ {cat:"Foreign Affairs",title:"A Border Incident",
+  sit:"Troops on the frontier have exchanged fire with a neighbour. The wires are humming.",
+  opts:[
+   {label:"Escalate loudly.",flavor:"Nothing unites a people like an enemy — nor alarms the great powers faster.",fx:{REV:-6,MIL:-6,INTV:12}},
+   {label:"De-escalate quietly.",flavor:"The generals wanted a war. They will remember you didn't.",fx:{INTV:-6,ELITE:-6}},
+   {label:"Do nothing and watch.",flavor:"Indecision reads as weakness, at home and abroad.",fx:{INTV:6,REV:6}},
+  ]},
+ {cat:"Corruption Scandal",title:"The Minister's Villa",
+  sit:"A foreign newspaper has published photographs of your finance minister's coastal palace.",
+  opts:[
+   {label:"Throw him to the wolves.",flavor:"The crowd is appeased; every other minister now wonders if he's next.",fx:{REV:-6,ELITE:-12}},
+   {label:"Deny and discredit.",flavor:"Costs nothing today. Convinces no one abroad.",fx:{POL:-6,REV:6,INTV:6}},
+   {label:"Quietly settle it.",flavor:"The elite close ranks gratefully. The treasury quietly bleeds.",fx:{ELITE:6,ECON:-6}},
+  ]},
+ {cat:"Economic Development",title:"Foreign Investment Proposal",
+  sit:"A consortium offers factories, roads, and a great deal of leverage over your economy.",
+  opts:[
+   {label:"Accept eagerly.",flavor:"Prosperity now, dependence later — and foreigners with a stake in your fate.",fx:{ECON:12,INTV:6,MIL:-6}},
+   {label:"Accept on your terms.",flavor:"Less money, more sovereignty. The middlemen are sour.",fx:{ECON:6,ELITE:-6}},
+   {label:"Refuse.",flavor:"Proud and poor. The great powers lose interest, which is not all bad.",fx:{ECON:-6,INTV:-6}},
+  ]},
+ {cat:"Political Opportunity",title:"A Rival Falls Ill",
+  sit:"The most plausible alternative to your rule has been taken gravely, conveniently ill.",
+  opts:[
+   {label:"Ensure he does not recover.",flavor:"One fewer claimant — but such arrangements inspire imitators.",fx:{COUP:-12,POL:-6,ASSN:6}},
+   {label:"Visit his bedside, publicly.",flavor:"A benevolent image, cheaply bought — though the ambitious read mercy as weakness.",fx:{REV:-6,ELITE:6,COUP:3}},
+   {label:"Do nothing.",flavor:"You keep your hands clean and your options open.",fx:{}},
+  ]},
+ {cat:"Administrative Dilemma",title:"The Census Question",
+  sit:"Your statisticians ask whether the census should count the restive provinces honestly.",
+  opts:[
+   {label:"Count them honestly.",flavor:"Good governance reveals exactly how many people resent you.",fx:{ECON:6,REV:6}},
+   {label:"Massage the numbers.",flavor:"A comforting fiction — but the people who cook books learn they can.",fx:{REV:-3,POL:-6}},
+   {label:"Cancel the census.",flavor:"The donors dislike a state that won't count itself.",fx:{ECON:-6,INTV:3}},
+  ]},
+ {cat:"Unexpected Crisis",title:"The Harvest Fails",
+  sit:"A drought has ruined the grain harvest. The cities will be hungry by winter.",
+  opts:[
+   {label:"Import food at any cost.",flavor:"The bread arrives; the treasury groans.",fx:{ECON:-12,REV:-6}},
+   {label:"Ration and repress.",flavor:"Order held at gunpoint; the hungry remember faces.",fx:{MIL:-6,REV:6,ASSN:3}},
+   {label:"Blame the speculators.",flavor:"A satisfying scapegoat — and every businessman now fears you.",fx:{POL:6,ECON:-6,ELITE:-6}},
+  ]},
+ {cat:"Insider Request",title:"The General Wants a War",
+  sit:"Your most popular general proposes a 'limited' campaign against a weak neighbour.",
+  opts:[
+   {label:"Give him his war.",flavor:"A victorious, occupied general is loyal. The world watches nervously.",fx:{MIL:12,INTV:12,COUP:-6}},
+   {label:"Promote him to a desk.",flavor:"Kicked upstairs, away from his troops — safer for you, weaker on the frontier.",fx:{COUP:-3,MIL:-6}},
+   {label:"Refuse the campaign.",flavor:"Prudent abroad, resented in the officers' mess.",fx:{INTV:-6,COUP:6}},
+  ]},
+ {cat:"Social Unrest",title:"Sermons Turn Political",
+  sit:"Clerics in the great temple have begun preaching against the corruption of your rule.",
+  opts:[
+   {label:"Arrest the preachers.",flavor:"Martyrs are dangerous, and the faithful do not forgive.",fx:{REV:-6,POL:-3,INTV:6,ASSN:6}},
+   {label:"Co-opt the hierarchy.",flavor:"Bought blessings — the cheapest legitimacy, while it lasts.",fx:{REV:-6,ECON:-6,ELITE:3}},
+   {label:"Ignore the sermons.",flavor:"Sermons have a way of becoming slogans.",fx:{REV:6}},
+  ]},
+ {cat:"Political Opportunity",title:"An Election Could Be Held",
+  sit:"Advisers suggest a managed election would burnish your image abroad and at home.",
+  opts:[
+   {label:"Hold a clean-ish election.",flavor:"Respectability abroad — but you've shown votes can matter.",fx:{INTV:-12,REV:-6,POL:-6}},
+   {label:"Hold a sham, win 99%.",flavor:"The loyalists love the theatre; no one outside is fooled.",fx:{REV:6,INTV:6,ELITE:6}},
+   {label:"Hold no election.",flavor:"Honest, at least. The great powers add a line to their file.",fx:{INTV:6}},
+  ]},
+ {cat:"Corruption Scandal",title:"Your Own Family",
+  sit:"Your brother-in-law has been caught siphoning the national airline. The foreign press is gleeful.",
+  opts:[
+   {label:"Prosecute your own kin.",flavor:"The people are astonished; the family will never trust you again.",fx:{REV:-6,ELITE:-12}},
+   {label:"Pay everyone off.",flavor:"Expensive silence. The family closes ranks around you.",fx:{ECON:-12,ELITE:6}},
+   {label:"Brazen it out.",flavor:"Free, shameless, and corrosive to what credibility remained.",fx:{REV:6,INTV:6}},
+  ]},
+ {cat:"The Security Apparatus",title:"A Plot Is Uncovered",
+  sit:"Your spies have intercepted chatter: someone close is planning to have you killed.",
+  opts:[
+   {label:"Round up the suspects at dawn.",flavor:"The plot is broken — and the city wakes to doors being kicked in.",fx:{ASSN:-12,POL:6,REV:6}},
+   {label:"Feed them false information and watch.",flavor:"You learn who else was listening. The cleverer play, if your nerve holds.",fx:{ASSN:-6,COUP:-6}},
+   {label:"Tell no one, change nothing.",flavor:"Bravado is not a security policy. The plotters take your silence for ignorance.",fx:{ASSN:6}},
+  ]},
+ {cat:"The Security Apparatus",title:"The Palace Guard",
+  sit:"The commander of your personal guard asks for a free hand — and a great deal of money — to make you untouchable.",
+  opts:[
+   {label:"Fund him lavishly.",flavor:"The safest man in the country, and the poorest treasury.",fx:{ASSN:-12,COUP:-6,ECON:-12}},
+   {label:"Fund him modestly.",flavor:"A reasonable price for sleeping soundly.",fx:{ASSN:-6,ECON:-6}},
+   {label:"Replace him with your cousin.",flavor:"Family will not coup you. Family may also not save you.",fx:{COUP:-6,ASSN:6,ELITE:6}},
+  ]},
+ {cat:"The Elite",title:"Two Generals Feud",
+  sit:"Your two most powerful generals despise each other, and the army is splitting into camps.",
+  opts:[
+   {label:"Back the stronger one.",flavor:"A united army under one ambitious man. You see the problem.",fx:{MIL:6,COUP:6}},
+   {label:"Play them against each other.",flavor:"Two rivals watching each other cannot watch you. The army suffers for it.",fx:{COUP:-12,MIL:-6}},
+   {label:"Promote a nobody above them both.",flavor:"Safe, and resented by everyone with talent.",fx:{COUP:-6,MIL:-6,ELITE:-6}},
+  ]},
+ {cat:"The People",title:"Ethnic Tensions Flare",
+  sit:"Violence has broken out between two communities in the provinces. Both blame the state.",
+  opts:[
+   {label:"Send the army to one side's aid.",flavor:"One community is grateful. The other will not forget.",fx:{REV:-6,MIL:-6,INTV:6}},
+   {label:"Impose a curfew on everyone.",flavor:"Resented equally, which is its own kind of fairness.",fx:{REV:-6,POL:-6,ECON:-6}},
+   {label:"Let them exhaust themselves.",flavor:"The cheapest option, and the one the cameras love most.",fx:{REV:12,INTV:6}},
+  ]},
+ {cat:"The Outside World",title:"Sanctions Are Threatened",
+  sit:"A bloc of foreign powers threatens sanctions unless you release your political prisoners.",
+  opts:[
+   {label:"Release a token few, with fanfare.",flavor:"The world is briefly satisfied; your hardliners briefly worried.",fx:{INTV:-6,REV:3}},
+   {label:"Defy them loudly.",flavor:"Popular at home, costly abroad — and the sanctions come anyway.",fx:{REV:-6,INTV:12,ECON:-6}},
+   {label:"Quietly negotiate concessions.",flavor:"The grown-up option. The price is paid out of sight.",fx:{INTV:-12,ELITE:-6}},
+  ]},
+ {cat:"The Outside World",title:"A Powerful Patron Courts You",
+  sit:"A great power offers arms, money, and protection — in exchange for becoming their client.",
+  opts:[
+   {label:"Accept their embrace.",flavor:"Strong and safe — and no longer entirely your own master.",fx:{MIL:12,ECON:6,INTV:-6}},
+   {label:"Take the money, dodge the commitment.",flavor:"You bank the cash and keep your options. They notice.",fx:{ECON:6,INTV:6}},
+   {label:"Refuse, to keep your independence.",flavor:"Proud, alone, and weaker for it.",fx:{INTV:6,MIL:-6}},
+  ]},
+ {cat:"The Elite",title:"A Crony Demands a Monopoly",
+  sit:"Your closest backer wants exclusive control of the nation's telecoms — and will pay handsomely in loyalty.",
+  opts:[
+   {label:"Grant the monopoly.",flavor:"A devoted oligarch and a strangled economy. The bill comes later.",fx:{ELITE:12,ECON:-12}},
+   {label:"Grant it, but tax it heavily.",flavor:"He grumbles at the tax but takes the deal. Shrewd.",fx:{ELITE:6,ECON:-3}},
+   {label:"Refuse, and open it to competition.",flavor:"The economy thrives; your oldest friend feels betrayed.",fx:{ECON:6,ELITE:-12}},
+  ]},
+ {cat:"The People",title:"The State Broadcaster",
+  sit:"Your information minister wants to convert the national broadcaster into a pure propaganda organ.",
+  opts:[
+   {label:"Approve total control.",flavor:"A captive audience — and a population that believes nothing it's told.",fx:{POL:6,REV:-6,ECON:-6}},
+   {label:"Keep a veneer of news.",flavor:"Subtler, and more effective for it.",fx:{REV:-3,POL:3}},
+   {label:"Loosen the leash entirely.",flavor:"A gamble: openness buys credibility abroad and trouble at home.",fx:{REV:6,INTV:-6,ECON:6}},
+  ]},
+ {cat:"The Security Apparatus",title:"The Torturer's Reputation",
+  sit:"Reports of what happens in your prisons have begun to circulate, at home and abroad.",
+  opts:[
+   {label:"Embrace the fear.",flavor:"Terror works — until the world is watching, and then it is evidence.",fx:{REV:-12,POL:6,INTV:12}},
+   {label:"Disappear the evidence.",flavor:"Expensive, and never quite complete.",fx:{INTV:-6,ECON:-6,POL:-6}},
+   {label:"Deny everything.",flavor:"Free, and believed by no one who matters.",fx:{INTV:6,REV:3}},
+  ]},
+ {cat:"Economic Development",title:"Oil Is Discovered",
+  sit:"Vast reserves have been found offshore. The question is who profits.",
+  opts:[
+   {label:"Nationalize it entirely.",flavor:"A fortune for the treasury, and foreign companies you've just robbed.",fx:{ECON:12,ELITE:-6,INTV:6}},
+   {label:"Share it with the elite.",flavor:"Less for the state, but your inner circle has never been happier.",fx:{ECON:6,ELITE:12}},
+   {label:"Invite foreign majors to develop it.",flavor:"Steady money and goodwill abroad — and foreigners on your soil.",fx:{ECON:6,INTV:-6,MIL:-6}},
+  ]},
+ {cat:"The Elite",title:"A Conspirator Confesses",
+  sit:"Under questioning, a junior officer names the ringleader of a planned coup: one of your own ministers.",
+  opts:[
+   {label:"Execute the minister publicly.",flavor:"The plot dies with him; the surviving ministers sleep badly, as intended.",fx:{COUP:-12,ELITE:-6,INTV:6}},
+   {label:"Quietly retire him abroad.",flavor:"He lives, comfortably, and the elite note your restraint.",fx:{COUP:-6,ELITE:3}},
+   {label:"Pardon him to show strength.",flavor:"A grand gesture the ambitious read, correctly, as weakness.",fx:{COUP:12,ELITE:6}},
+  ]},
+ {cat:"The Outside World",title:"Refugees Mass at the Border",
+  sit:"War in a neighbouring state has driven thousands of refugees to your frontier.",
+  opts:[
+   {label:"Seal the border with troops.",flavor:"Order is kept; the images are ugly.",fx:{INTV:6,MIL:-6,REV:-3}},
+   {label:"Let them in and house them.",flavor:"Goodwill abroad, strain at home.",fx:{ECON:-12,INTV:-6}},
+   {label:"Quietly wave them through to elsewhere.",flavor:"Cheap, cynical, and noticed by your neighbours.",fx:{INTV:6,ECON:-3}},
+  ]},
+ {cat:"State Terror",title:"A Question of Public Examples",
+  sit:"The interior ministry recommends the next sentences be carried out in the public square, 'for their instructional value.'",
+  opts:[
+   {label:"Approve the public schedule.",flavor:"Attendance is, in a sense, mandatory. The footage travels further than you would like.",fx:{REV:-12,INTV:12,ASSN:6}},
+   {label:"Carry them out, but quietly.",flavor:"The ministry is disappointed; deterrence, it argues, requires an audience.",fx:{REV:-6,INTV:3}},
+   {label:"Commute the sentences.",flavor:"A gesture noticed abroad and resented by the men who prepared the gallows.",fx:{REV:6,ELITE:-6}},
+  ]},
+ {cat:"State Terror",title:"The Interview Methods Review",
+  sit:"Your security service requests formal authorization for 'enhanced methods.' The paperwork awaits your signature.",
+  opts:[
+   {label:"Sign the authorization.",flavor:"Confessions multiply. So do the photographs that someone, eventually, smuggles out.",fx:{POL:12,REV:-6,INTV:12}},
+   {label:"Authorize, but leave no paper trail.",flavor:"What is not written cannot be subpoenaed. The methods continue regardless.",fx:{POL:6,INTV:3}},
+   {label:"Forbid it in writing.",flavor:"The prisoners are merely held — which solves nothing and offends no one.",fx:{POL:-6,REV:3}},
+  ]},
+ {cat:"State Terror",title:"The Disappearances",
+  sit:"A list of names crosses your desk: dissidents, organizers, a journalist or two. The proposal is that they simply cease to be anywhere.",
+  opts:[
+   {label:"Approve the list in full.",flavor:"The opposition loses its spine overnight. Every family left behind has nothing left to lose.",fx:{REV:-12,ASSN:12,INTV:6}},
+   {label:"Approve only the organizers.",flavor:"Fewer martyrs, fewer mourners. The journalist lives to write about it.",fx:{REV:-6,ASSN:6}},
+   {label:"Reject the list.",flavor:"The names stay above ground. The hardliners record your hesitation.",fx:{REV:6}},
+  ]},
+ {cat:"State Terror",title:"A Massacre Is Proposed",
+  sit:"Generals advise that the rebellious province be 'pacified comprehensively' — made an example of, to the last village.",
+  opts:[
+   {label:"Order the pacification.",flavor:"The province is quiet, the way cemeteries are quiet. The world has the satellite images by morning.",fx:{REV:-12,INTV:12,COUP:-6}},
+   {label:"A limited operation only.",flavor:"A harder military task, and a smaller stain.",fx:{REV:-6,MIL:-6,INTV:6}},
+   {label:"Offer the province amnesty.",flavor:"Costly, and the generals mutter that you have rewarded treason.",fx:{REV:-3,ECON:-6,INTV:-6}},
+  ]},
+ {cat:"State Terror",title:"The Press Conference",
+  sit:"A prominent prisoner has died in custody. The body, and the questions, must be managed before the morning editions.",
+  opts:[
+   {label:"Declare it a suicide.",flavor:"No one believes it. Everyone repeats it — and the official lie is what travels abroad.",fx:{POL:6,INTV:12}},
+   {label:"Blame a rogue subordinate.",flavor:"A scapegoat is found, tried, and quietly looked after afterward.",fx:{POL:-6,REV:-3}},
+   {label:"Say nothing and wait.",flavor:"At home the rumours fester; abroad, with no statement to quote, the matter slips from the news.",fx:{REV:6}},
+  ]},
+ {cat:"State Terror",title:"The Loyalty Purge",
+  sit:"Your security chief presents evidence — some of it possibly real — implicating a swathe of officials. A purge, he suggests, would refresh everyone's loyalty.",
+  opts:[
+   {label:"Purge widely.",flavor:"The survivors are exquisitely loyal and entirely terrified. The administration barely functions for a season.",fx:{COUP:-12,POL:6,ELITE:-12,ECON:-6}},
+   {label:"Purge a symbolic few.",flavor:"A measured culling. The point is taken.",fx:{COUP:-6,ELITE:-6}},
+   {label:"Refuse, and reassure the ministries.",flavor:"They serve you gratefully — until the next man with evidence arrives.",fx:{COUP:6,ELITE:6}},
+  ]},
+];
+
+// ---------------- GAME STATE ----------------
+let G;
+function newGame(){
+  G={
+    year:1, score:0, foreign:0, econ:P.econStart,
+    caps:{ECON:P.capStart,MIL:P.capStart,POL:P.capStart,ELITE:P.capStart},
+    dangers:{revolution:P.dangerStart,coup:P.dangerStart,assassination:P.dangerStart,intervention:P.dangerStart},
+    phase:"intro", deck:[], cardIdx:0, yearCards:[], lastChallenge:null,
+  };
+  render();
+}
+function beginReign(){ G.phase="budget"; render(); }
+
+function defenseFor(threat){
+  const g=P.guard[threat]; let d=0,w=0;
+  for(const k in g){d+=(G.caps[k]||0)*g[k];w+=g[k];}
+  return d/w;
+}
+function drawYearCards(){
+  // 6 cards, shuffled from the 12
+  const idx=[...CARDS.keys()];
+  for(let i=idx.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[idx[i],idx[j]]=[idx[j],idx[i]];}
+  G.yearCards=idx.slice(0,6).map(i=>CARDS[i]);
+  G.cardIdx=0;
+}
+// Scalar on every card effect — makes player choices more consequential (and the
+// needles sweep further). Provisional; the real balance pass will tune this with
+// the full deck and a score-based objective.
+const CARD_SCALE=1.5;
+function applyFx(fx){
+  for(const k in fx){
+    const d=fx[k]*CARD_SCALE;
+    if(k in G.caps) G.caps[k]=clamp(G.caps[k]+d,0,100);
+    else if(k in DKEY) G.dangers[DKEY[k]]=clamp(G.dangers[DKEY[k]]+d,0,100);
+  }
+}
+
+// ---------------- DIAL RENDER ----------------
+// The needle is a vertical line rotated by CSS transform. Angle: -90deg (left/safe)
+// to +90deg (right/danger). CSS transition animates the sweep natively — reliable
+// even where requestAnimationFrame is throttled (mobile webviews, reduced-motion).
+function needleAngle(value){ return -90 + (value/100)*180; }
+function needleColor(value){ return value<45?'#5a7a28':value<70?'#c9a227':'#c0341d'; }
+function dialSVG(value){
+  const W=104,H=66,cx=W/2,cy=H-8,r=40;
+  const a0=Math.PI,a1=0;
+  const pt=(ang,rad)=>[cx+Math.cos(ang)*rad, cy-Math.sin(ang)*rad];
+  const arc=(f0,f1,rad,color,wid)=>{
+    const af=a0+(a1-a0)*f0,at=a0+(a1-a0)*f1;
+    const [x0,y0]=pt(af,rad),[x1,y1]=pt(at,rad);
+    return `<path d="M${x0.toFixed(1)},${y0.toFixed(1)} A${rad},${rad} 0 0 1 ${x1.toFixed(1)},${y1.toFixed(1)}" fill="none" stroke="${color}" stroke-width="${wid}"/>`;
+  };
+  const col=needleColor(value), ang=needleAngle(value);
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    ${arc(0,.5,r,'#cdd3a8',6)}${arc(.5,.78,r,'#e6d59a',6)}${arc(.78,1,r,'#e3a89a',6)}
+    <g class="needle-g" style="transform:rotate(${ang}deg);transform-origin:${cx}px ${cy}px;transition:transform 1.6s cubic-bezier(.22,1,.36,1)">
+      <line class="needle" x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy-(r-5)}" stroke="${col}" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <circle cx="${cx}" cy="${cy}" r="3.5" fill="${col}"/></svg>`;
+}
+// animate a dial to a new value by rotating its existing needle (CSS transition does the sweep)
+function setDial(key,value){
+  const wrap=document.getElementById("dial_"+key);
+  if(!wrap)return;
+  const g=wrap.querySelector(".needle-g");
+  const line=wrap.querySelector(".needle");
+  if(g){ g.style.transform=`rotate(${needleAngle(value)}deg)`; }
+  if(line){ line.setAttribute("stroke",needleColor(value)); }
+  const vEl=document.getElementById("dialval_"+key);
+  if(vEl)vEl.textContent=Math.round(value);
+}
+function setCapBar(key,value){
+  const fill=document.getElementById("capfill_"+key);
+  const val=document.getElementById("capval_"+key);
+  if(fill)fill.style.width=value+"%";
+  if(val)val.textContent=Math.round(value);
+}
+function consoleHTML(valsOverride){
+  const dv = valsOverride? valsOverride.dangers : G.dangers;
+  const cv = valsOverride? valsOverride.caps : G.caps;
+  const dials=Object.keys(DNAMES).map(k=>`<div class="dial-wrap" id="dial_${k}"><div class="dial-svg">${dialSVG(Math.round(dv[k]))}</div><div class="dial-label">${DNAMES[k]}</div><div class="dial-val" id="dialval_${k}">${Math.round(dv[k])}</div></div>`).join("");
+  const caps=Object.keys(CNAMES).map(k=>{
+    const v=Math.round(cv[k]);
+    return `<div class="cap"><div class="cap-track"><div class="cap-fill" id="capfill_${k}" style="width:${v}%"></div></div><div class="cap-val" id="capval_${k}">${v}</div><div class="cap-label">${CNAMES[k]}</div></div>`;
+  }).join("");
+  return `<div class="console">
+    <div class="console-head threats">Threats — watch the needles</div>
+    <div class="dials">${dials}</div>
+    <div class="console-head caps" style="margin-top:14px">Capabilities — your instruments of rule</div>
+    <div class="caps">${caps}</div>
+  </div>`;
+}
+function hudHTML(){
+  return `<div class="hud"><span class="year">Year ${G.year} <span style="font-size:9px;letter-spacing:.1em;color:var(--olive-soft);font-weight:400">· v${VERSION}</span></span><span class="money">Score ${Math.round(G.score)} · Abroad ${Math.round(G.foreign)}</span></div>`;
+}
+
+// ---------------- SCREENS ----------------
+const app=()=>document.getElementById("app");
+function render(){
+  if(G.phase==="intro") return renderIntro();
+  if(G.phase==="yearstart") return renderYearStart();
+  if(G.phase==="budgetfeedback") return renderBudgetFeedback();
+  if(G.phase==="budget") return renderBudget();
+  if(G.phase==="cards") return renderCard();
+  if(G.phase==="outcome") return renderOutcome();
+  if(G.phase==="challenge") return renderChallenge();
+  if(G.phase==="challenge_result") return renderChallengeResult();
+  if(G.phase==="end") return renderEnd();
+}
+
+function renderIntro(){
+  app().innerHTML=`
+  <header>
+    <div class="eyebrow"><span>The Institute</span><span>for the Advancement</span><span>of Dictatorships</span></div>
+    <h1>The Reign<span class="sub2">Game</span></h1>
+    <div class="sub">A Practical Examination · Field Module v${VERSION}</div>
+  </header>
+  <div class="pad intro-body">
+    <p>You have taken power. The pleasant part is over.</p>
+    <p>Each year, your economy yields a budget. You may <em>extract</em> it — wealth banked to your name, the only score that counts — or pour it into the <em>military, secret police, and elite</em> who keep the knives away, or build <em>public works</em> that grow the economy and swell every budget to come, or quietly move it <em>abroad</em> — though half is lost in the moving — for a rainier day. Every coin spent enjoying power is a coin not spent surviving it.</p>
+    <p>Six matters will cross your desk each year, each a small dilemma. Then the annual reckoning: revolution, coup, assassination, or foreign intervention — drawn by fate, survived by your strength. Your four threat dials tell you how exposed you are. <em>Watch the needles.</em></p>
+    <p>And one door is always open. When a threat is announced, you may <em>flee into exile</em> and live out your days on what you stashed abroad — yours to keep in full, though half was lost getting it there. Every dictator overstays. The art is knowing the year to leave.</p>
+    <div style="text-align:center;margin-top:26px">
+      <button class="btn" onclick="beginReign()" style="font-size:15px;padding:14px 28px">Let us dictate ▸</button>
+    </div>
+  </div>
+  <div class="seal">Property of the Institute · Maximise your reign · Know when to run</div>`;
+}
+
+function renderYearStart(){
+  const budget=Math.round(G.econ);
+  const prev=G.lastBudget||budget;
+  const diff=budget-prev;
+  let econLine, econColor;
+  if(diff>=4){ econLine="The economy has prospered."; econColor="var(--green)"; }
+  else if(diff<=-4){ econLine="The economy has declined."; econColor="var(--red)"; }
+  else { econLine="The economy has held steady."; econColor="var(--ink-dim)"; }
+  const budgetLine = diff===0 ? `Your budget this year is <b>${budget}</b>.`
+    : `Your budget this year is <b>${budget}</b> <span style="color:${econColor}">(${diff>0?'+':''}${diff})</span>.`;
+  app().innerHTML=`
+  <div class="pad" style="padding-top:36px">
+    <div class="ch-eyebrow" style="text-align:center;color:var(--olive-soft)">The State of the Reign</div>
+    <h2 style="text-align:center;font-size:30px;margin:6px 0 22px">You have reached Year ${G.year}</h2>
+    <div class="reign-stats">
+      <div class="rstat"><div class="rstat-num">${Math.round(G.score)}</div><div class="rstat-lab">Score accumulated</div></div>
+      <div class="rstat"><div class="rstat-num">${Math.round(G.foreign)}</div><div class="rstat-lab">Salted away abroad</div></div>
+    </div>
+    <p style="text-align:center;font-size:16px;margin-top:24px"><span style="color:${econColor};font-weight:600">${econLine}</span> ${budgetLine}</p>
+    <div style="text-align:center;margin-top:26px">
+      <button class="btn" onclick="proceedToBudget()" style="font-size:15px;padding:13px 26px">Allocate the budget ▸</button>
+    </div>
+  </div>`;
+}
+
+// budget allocation
+let alloc;
+function renderBudget(){
+  const budget=Math.round(G.econ);
+  alloc={extract:0,foreign:0,MIL:0,POL:0,ELITE:0,invest:0};
+  // default: spread evenly across defence as a starting suggestion
+  app().innerHTML=hudHTML()+consoleHTML()+`
+  <div class="alloc">
+    <div class="sectit">Annual Budget · ${budget} units to allocate</div>
+    ${allocRow("extract","Extraction","Enjoy power now — banked to your score, guaranteed.")}
+    ${allocRow("foreign","Foreign Assets","Spirited abroad — half is lost in transit; the rest is safe for exile.")}
+    ${allocRow("MIL","Military","Guards against Revolution and Intervention.")}
+    ${allocRow("POL","Secret Police","Guards against all threats — your sharpest tool.")}
+    ${allocRow("ELITE","Elite Patronage","Guards against Coup and Intervention.")}
+    ${allocRow("invest","Public Investment","Grows next year's economy.")}
+  </div>
+  <div class="budget-bar">
+    <span class="budget-left">Unallocated: <b id="left">${budget}</b> / ${budget}</span>
+    <button class="btn" id="commit" onclick="commitBudget()">Commit & Begin the Year ▸</button>
+  </div>`;
+  updateLeft();
+}
+function allocRow(key,name,desc){
+  const budget=Math.round(G.econ);
+  return `<div class="alloc-row">
+    <div class="alloc-name">${name}<small>${desc}</small></div>
+    <div class="alloc-slider"><input type="range" min="0" max="${budget}" value="0" id="sl_${key}" oninput="onSlide('${key}',this.value)"></div>
+    <div class="alloc-amt" id="amt_${key}">0</div>
+  </div>`;
+}
+function onSlide(key,val){
+  const budget=Math.round(G.econ);
+  // how much is committed to the OTHER channels right now
+  const otherUsed=Object.entries(alloc).reduce((s,[k,v])=>s+(k===key?0:v),0);
+  const maxForThis=budget-otherUsed;          // the most this slider may take
+  let v=Math.min(+val, maxForThis);           // clamp the request to what's left
+  alloc[key]=v;
+  const sl=document.getElementById("sl_"+key);
+  if(sl && +sl.value!==v) sl.value=v;          // snap the slider back if it over-reached
+  document.getElementById("amt_"+key).textContent=v;
+  updateLeft();
+}
+function updateLeft(){
+  const budget=Math.round(G.econ);
+  const used=Object.values(alloc).reduce((a,b)=>a+b,0);
+  const left=budget-used;
+  const el=document.getElementById("left"); if(el)el.textContent=left;
+  const lb=document.querySelector(".budget-left"); if(lb)lb.classList.toggle("budget-warn",left<0);
+  const commit=document.getElementById("commit"); if(commit)commit.disabled=left<0;
+}
+function commitBudget(){
+  G.lastBudget=Math.round(G.econ);  // remember this year's budget for next year's comparison
+  const budget=Math.max(1,Math.round(G.econ));
+  const before={dangers:{...G.dangers}, caps:{...G.caps}};
+  // apply budget
+  G.score+=alloc.extract; G.foreign+=alloc.foreign*P.foreignDiscount;  // half is lost in transit; the stash holds true value
+  for(const c of ["MIL","POL","ELITE"]){
+    const taper=1-G.caps[c]/100;
+    G.caps[c]=clamp(G.caps[c]*(1-P.capDecay)+alloc[c]*P.capGain*taper,0,100);
+  }
+  const invReturn=P.investGain/(1+G.econ/P.investHalf);
+  G.econ=clamp(G.econ*(1-P.econDecay)+alloc.invest*invReturn,20,P.econMax);
+  G.caps.ECON=clamp(G.econ/3,0,100); // ECON capability mirrors economy (display)
+  // extraction directly stokes danger, scaled by the SHARE of budget taken
+  const extractFrac=alloc.extract/budget;
+  G.dangers.revolution=clamp(G.dangers.revolution+extractFrac*P.extractRevK,0,100);
+  G.dangers.coup=clamp(G.dangers.coup+extractFrac*P.extractCoupK,0,100);
+  // remember the allocation & before-state for the feedback screen
+  G.lastAlloc={...alloc, extractFrac};
+  G.budgetBefore=before;
+  G.phase="budgetfeedback"; render();
+}
+
+// event card
+function renderCard(){
+  const c=G.yearCards[G.cardIdx];
+  const optsHTML=c.opts.map((o,i)=>{
+    return `<div class="opt" onclick="chooseOpt(${i})">
+      <div class="opt-label">${o.label}</div>
+      <div class="opt-flavor">${o.flavor}</div>
+    </div>`;
+  }).join("");
+  app().innerHTML=hudHTML()+consoleHTML()+`
+  <div class="card">
+    <div class="card-progress">Dispatch ${G.cardIdx+1} of 6 · Year ${G.year}</div>
+    <div class="card-cat">${c.cat}</div>
+    <div class="card-title">${c.title}</div>
+    <div class="card-situation">${c.sit}</div>
+    ${optsHTML}
+  </div>`;
+}
+function chooseOpt(i){
+  const opt=G.yearCards[G.cardIdx].opts[i];
+  const before={dangers:{...G.dangers}, caps:{...G.caps}};
+  applyFx(opt.fx);
+  G.lastOutcome={opt, card:G.yearCards[G.cardIdx], before};
+  G.phase="outcome"; render();
+}
+function continueAfterOutcome(){
+  G.lastOutcome=null;
+  G.cardIdx++;
+  if(G.cardIdx>=6){ endOfYear(); } else { G.phase="cards"; render(); }
+}
+function renderOutcome(){
+  const {opt,card,before}=G.lastOutcome;
+  // render the console frozen at the BEFORE state, so we can animate to the new values
+  app().innerHTML=hudHTML()+consoleHTML(before)+`
+  <div class="card">
+    <div class="card-progress">Dispatch ${G.cardIdx+1} of 6 · Year ${G.year}</div>
+    <div class="outcome">
+      <div class="outcome-choice">You chose: <b>${opt.label}</b></div>
+      <div class="outcome-flavor">${opt.flavor}</div>
+      <div class="outcome-watch" id="watchLine">Watch the console…</div>
+    </div>
+    <div style="text-align:center;margin-top:18px">
+      <button class="btn" id="contBtn" onclick="continueAfterOutcome()">${G.cardIdx>=5?'Face the year\u2019s reckoning \u25B8':'Next dispatch \u25B8'}</button>
+    </div>
+  </div>`;
+  animateOutcome(before);
+}
+function animateOutcome(before){
+  const fx=G.lastOutcome.opt.fx;
+  const movedDangers=Object.keys(fx).filter(k=>k in DKEY).map(k=>DKEY[k]);
+  const movedCaps=Object.keys(fx).filter(k=>k in CNAMES);
+  const wl=document.getElementById("watchLine");
+  if(movedDangers.length===0 && movedCaps.length===0){
+    if(wl)wl.textContent="Nothing on the console stirred.";
+    return;
+  }
+  // Force the browser to paint the BEFORE state first (read offsetHeight = reflow),
+  // THEN set the after-positions, so the CSS transition has two distinct states to
+  // interpolate between. Without this, a just-created element jumps instantly.
+  const consoleEl=document.querySelector(".console");
+  if(consoleEl) void consoleEl.offsetHeight;   // force reflow
+  requestAnimationFrame(()=>{
+    for(const dk of movedDangers) setDial(dk, G.dangers[dk]);
+    for(const ck of movedCaps)   setCapBar(ck, G.caps[ck]);
+  });
+  // Count the numeric labels from before->after over ~0.9s (independent of the sweep).
+  const dur=1600, t0=Date.now();
+  const tick=()=>{
+    const t=Math.min(1,(Date.now()-t0)/dur);
+    for(const dk of movedDangers){
+      const v=Math.round(before.dangers[dk]+(G.dangers[dk]-before.dangers[dk])*t);
+      const el=document.getElementById("dialval_"+dk); if(el)el.textContent=v;
+    }
+    for(const ck of movedCaps){
+      const v=Math.round(before.caps[ck]+(G.caps[ck]-before.caps[ck])*t);
+      const el=document.getElementById("capval_"+ck); if(el)el.textContent=v;
+    }
+    if(t<1) setTimeout(tick,40);
+    else if(wl){
+      const ups=[],downs=[];
+      for(const dk of movedDangers){
+        const d=G.dangers[dk]-before.dangers[dk];
+        if(d>0.5) ups.push(DNAMES[dk]); else if(d<-0.5) downs.push(DNAMES[dk]);
+      }
+      let bits=[];
+      if(downs.length) bits.push(downs.join(" & ")+(downs.length>1?" ease":" eases"));
+      if(ups.length) bits.push(ups.join(" & ")+(ups.length>1?" stir":" stirs"));
+      wl.textContent = bits.length? bits.join("; ")+"." : "Your instruments shift.";
+    }
+  };
+  setTimeout(tick,60);
+}
+function proceedToCards(){ drawYearCards(); G.phase="cards"; render(); }
+function renderBudgetFeedback(){
+  const before=G.budgetBefore;
+  const a=G.lastAlloc;
+  // build a worded narration of the allocation
+  const bits=[];
+  if(a.extract>0) bits.push(`extracted <b>${Math.round(a.extract)}</b> for yourself`);
+  if(a.invest>0) bits.push(`invested <b>${Math.round(a.invest)}</b> in the country`);
+  const fed=[]; if(a.MIL>0)fed.push("the army"); if(a.POL>0)fed.push("the secret police"); if(a.ELITE>0)fed.push("the elite");
+  if(fed.length) bits.push("fed "+fed.join(", "));
+  if(a.foreign>0) bits.push(`moved <b>${Math.round(a.foreign*P.foreignDiscount)}</b> abroad`);
+  let narration = bits.length? "You "+bits.join("; ")+"." : "You committed nothing this year.";
+  // extraction warning line
+  let extractNote="";
+  if(a.extractFrac>=0.5) extractNote=`<div class="outcome-watch" style="color:var(--red)">Such naked looting does not go unnoticed. The street stirs.</div>`;
+  else if(a.extractFrac>0.25) extractNote=`<div class="outcome-watch" style="color:var(--ink-dim)">Your appetite is noted in the provinces.</div>`;
+
+  app().innerHTML=hudHTML()+consoleHTML(before)+`
+  <div class="card">
+    <div class="card-progress">Budget Committed · Year ${G.year}</div>
+    <div class="outcome">
+      <div class="outcome-flavor" style="font-style:normal">${narration}</div>
+      ${extractNote}
+      <div class="outcome-watch" id="watchLine">Watch the console…</div>
+    </div>
+    <div style="text-align:center;margin-top:18px">
+      <button class="btn" onclick="proceedToCards()">Begin the year ▸</button>
+    </div>
+  </div>`;
+  animateConsole(before, "watchLine");
+}
+// generic: animate every needle/bar that changed between `before` and current G state
+function animateConsole(before, watchId){
+  const movedDangers=Object.keys(DNAMES).filter(k=>Math.abs(G.dangers[k]-before.dangers[k])>0.5);
+  const movedCaps=Object.keys(CNAMES).filter(k=>Math.abs(G.caps[k]-before.caps[k])>0.5);
+  const wl=watchId?document.getElementById(watchId):null;
+  if(movedDangers.length===0 && movedCaps.length===0){ if(wl)wl.textContent="The console holds steady."; return; }
+  const consoleEl=document.querySelector(".console");
+  if(consoleEl) void consoleEl.offsetHeight;
+  requestAnimationFrame(()=>{
+    for(const dk of movedDangers) setDial(dk, G.dangers[dk]);
+    for(const ck of movedCaps)   setCapBar(ck, G.caps[ck]);
+  });
+  const dur=1600, t0=Date.now();
+  const tick=()=>{
+    const t=Math.min(1,(Date.now()-t0)/dur);
+    for(const dk of movedDangers){const v=Math.round(before.dangers[dk]+(G.dangers[dk]-before.dangers[dk])*t);const el=document.getElementById("dialval_"+dk);if(el)el.textContent=v;}
+    for(const ck of movedCaps){const v=Math.round(before.caps[ck]+(G.caps[ck]-before.caps[ck])*t);const el=document.getElementById("capval_"+ck);if(el)el.textContent=v;}
+    if(t<1) setTimeout(tick,40);
+    else if(wl){
+      const ups=[],downs=[];
+      for(const dk of movedDangers){const d=G.dangers[dk]-before.dangers[dk];if(d>0.5)ups.push(DNAMES[dk]);else if(d<-0.5)downs.push(DNAMES[dk]);}
+      let bits=[];
+      if(downs.length)bits.push(downs.join(" & ")+(downs.length>1?" ease":" eases"));
+      if(ups.length)bits.push(ups.join(" & ")+(ups.length>1?" stir":" stirs"));
+      wl.textContent=bits.length?bits.join("; ")+".":"Your instruments shift.";
+    }
+  };
+  setTimeout(tick,60);
+}
+function endOfYear(){
+  // danger drift (accelerating) + suppression
+  for(const t in G.dangers){
+    const drift=P.driftBase+P.driftAccel*G.year;
+    let d=G.dangers[t]+drift;
+    const guard=defenseFor(t);
+    const supp=Math.max(0,(guard-50))*P.suppressK;
+    d-=Math.min(supp,drift*P.suppressFloorVsDrift);
+    G.dangers[t]=clamp(d,0,100);
+  }
+  // draw which threat is coming (but DON'T resolve it yet) — the dictator sees it first
+  const roll=Math.floor(Math.random()*5);
+  const threats=["revolution","coup","assassination","intervention"];
+  if(roll>=4){ G.lastChallenge={type:"quiet"}; }
+  else{ G.lastChallenge={type:threats[roll]}; }
+  G.phase="challenge"; render();
+}
+
+// worded characterisation of how exposed the regime is to the coming threat —
+// derived from the danger level, but expressed in words. The player still reads
+// the precise state off the needle; this is just atmosphere.
+function threatMood(dangerLevel){
+  if(dangerLevel>=80) return "The situation is dire.";
+  if(dangerLevel>=60) return "The danger is grave.";
+  if(dangerLevel>=40) return "The threat is real.";
+  if(dangerLevel>=20) return "You are reasonably placed.";
+  return "You are well prepared.";
+}
+function renderChallenge(){
+  const ch=G.lastChallenge;
+  if(ch.type==="quiet"){
+    app().innerHTML=hudHTML()+consoleHTML()+`<div class="challenge ch-quiet">
+      <div class="ch-eyebrow" style="color:var(--green)">The Annual Reckoning</div>
+      <div class="ch-title">A Quiet Year</div>
+      <div class="ch-body">No great challenge came. The regime endures, and you live to rule another year.</div>
+      <div style="margin-top:20px"><button class="btn" onclick="nextYear()">Continue to Year ${G.year+1} ▸</button></div>
+    </div>`;
+    return;
+  }
+  // a threat is coming — announce it and offer the choice: face it, or flee.
+  const intro={
+    revolution:"The streets are filling. A <b>Revolution</b> is rising against you.",
+    coup:"The generals are whispering. A <b>Coup</b> is being prepared.",
+    assassination:"Your spies report a plot. An <b>Assassination</b> is coming for you.",
+    intervention:"Foreign fleets are massing. An <b>Intervention</b> looms.",
+  };
+  const guardHint={
+    revolution:"Read your Revolution needle.",
+    coup:"Read your Coup needle.",
+    assassination:"Read your Assassination needle.",
+    intervention:"Read your Intervention needle.",
+  };
+  const mood=threatMood(G.dangers[ch.type]);
+  const foreignNote = G.foreign>0
+    ? `If you flee, you carry <b>${Math.round(G.foreign)}</b> abroad into a comfortable exile.`
+    : `You have nothing stashed abroad — exile would be empty-handed.`;
+  app().innerHTML=hudHTML()+consoleHTML()+`<div class="challenge">
+    <div class="ch-eyebrow">The Annual Reckoning · Year ${G.year}</div>
+    <div class="ch-title" style="font-size:24px">${DNAMES[ch.type]} Approaches</div>
+    <div class="ch-body">${intro[ch.type]}</div>
+    <div class="ch-body" style="color:var(--ink-dim);font-style:italic">${mood} ${guardHint[ch.type]}</div>
+    <div class="ch-body" style="margin-top:6px">${foreignNote}</div>
+    <div style="display:flex;gap:14px;justify-content:center;margin-top:22px;flex-wrap:wrap">
+      <button class="btn" onclick="faceChallenge()">Stand and face it ▸</button>
+      <button class="btn ghost" onclick="flee()">Flee into exile now</button>
+    </div>
+  </div>`;
+}
+function faceChallenge(){
+  const ch=G.lastChallenge;
+  const t=ch.type;
+  const pSurv=logistic(P.survK*(defenseFor(t)-G.dangers[t]));
+  const survived=Math.random()<pSurv;
+  if(survived){
+    G.phase="challenge_result"; G.lastChallenge.survived=true; render();
+  } else {
+    const claw=Math.max(P.penalty[t], G.score*P.penaltyClawFrac);
+    G.score=Math.max(0,G.score-claw);
+    G.phase="end"; G.endReason=t; render();
+  }
+}
+function renderChallengeResult(){
+  const ch=G.lastChallenge;
+  app().innerHTML=hudHTML()+consoleHTML()+`<div class="challenge">
+    <div class="ch-eyebrow">The Annual Reckoning</div>
+    <div class="ch-title">${DNAMES[ch.type]} — Survived</div>
+    <div class="ch-body">You stood your ground, and the threat broke against your regime. You held.</div>
+    <div style="margin-top:20px"><button class="btn" onclick="nextYear()">Continue to Year ${G.year+1} ▸</button></div>
+  </div>`;
+}
+function nextYear(){ G.year++; G.phase="yearstart"; render(); }
+function proceedToBudget(){ G.phase="budget"; render(); }
+
+// flee / exit
+function flee(){
+  G.score+=G.foreign;  // stash already net of transit losses
+  G.phase="end"; G.endReason="exile"; render();
+}
+
+// end screen
+function renderEnd(){
+  const r=G.endReason;
+  let verdict,title,body,seal;
+  const epi={
+    coup:"The generals remove you from office. You retire to one of your minor palaces.",
+    revolution:"The crowds storm the capital. You are captured, and spend your remaining years in a cell.",
+    intervention:"Foreign forces intervene. You are arrested and brought before an international tribunal.",
+    assassination:"A shot rings out. Your rule ends instantly.",
+  };
+  if(r==="exile"){
+    verdict="Exile"; title="You Read the Room";
+    body="Before the reckoning could come, you boarded the plane. The foreign accounts are yours to enjoy, and your successors may face the tribunal in your place. The Institute regards a well-timed exit as the mark of a true professional.";
+    seal="Dossier closed · The Institute commends a graceful departure";
+  } else {
+    verdict="Deposed"; title=({coup:"The Generals Move",revolution:"The Capital Falls",intervention:"The Powers Intervene",assassination:"A Shot Rings Out"})[r];
+    body=epi[r]+" Whatever you stashed abroad is lost to you now — there was no graceful exit. The Institute files your reign under <em>overstayed</em>, the commonest of all autocratic mistakes.";
+    seal="Dossier closed · The Institute notes another reign ended late";
+  }
+  const reignScore=Math.round(G.score);
+  app().innerHTML=`<div class="end">
+    <div class="verdict ${r==='exile'?'exile':'fell'}">${verdict}</div>
+    <h2>${title}</h2>
+    <p>${body}</p>
+    <div class="scorecard">
+      <div class="score-lab">Final Score · a reign of ${G.year} year${G.year>1?'s':''}</div>
+      <div class="score-hero">${reignScore}</div>
+      <div class="score-sub">${r==='exile'?'your foreign fortune, kept in full (half was lost in transit)':'foreign assets forfeited; penalty applied'}</div>
+    </div>
+    <div style="display:flex;gap:12px"><button class="btn" onclick="newGame()">Rule again</button></div>
+  </div>
+  <div class="seal">${seal}</div>`;
+}
+
+newGame();
+</script>
+</body>
+</html>
