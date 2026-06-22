@@ -128,7 +128,7 @@
 <body>
 <div class="frame" id="app"></div>
 <script>
-const VERSION="0.3.4";
+const VERSION="0.3.5";
 
 // ---------------- ENGINE PARAMETERS (provisional, 0–100 scale) ----------------
 const P={
@@ -137,7 +137,7 @@ const P={
   // economy lives on the same 0–100 scale as everything else; budget = econ directly.
   investGain:0.9, investHalf:60, econDecay:0.05, econMax:100,
   capGain:1.0, capDecay:0.08,
-  driftBase:3, driftAccel:0.7, suppressK:0.10, suppressFloorVsDrift:0.6,
+  driftBase:3, driftAccel:0.7, suppressK:0.13, suppressBase:15, suppressFloorVsDrift:0.9,
   guard:{revolution:{MIL:.5,POL:.5}, coup:{ELITE:.6,POL:.4}, assassination:{POL:1}, intervention:{MIL:.5,ELITE:.5}},
   survK:0.07, foreignDiscount:0.5,
   econCardDamp:0.4,  // dampen card ECON effects to fit the 0–100 economy (was sized for 0–300)
@@ -1189,7 +1189,7 @@ function endOfYear(){
     const drift=P.driftBase+P.driftAccel*G.year;
     let d=G.dangers[t]+drift;
     const guard=defenseFor(t);
-    const supp=Math.max(0,(guard-50))*P.suppressK;
+    const supp=Math.max(0,(guard-P.suppressBase))*P.suppressK;
     d-=Math.min(supp,drift*P.suppressFloorVsDrift);
     G.dangers[t]=clamp(d,0,100);
   }
