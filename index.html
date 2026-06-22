@@ -128,7 +128,7 @@
 <body>
 <div class="frame" id="app"></div>
 <script>
-const VERSION="0.3.2";
+const VERSION="0.3.3";
 
 // ---------------- ENGINE PARAMETERS (provisional, 0–100 scale) ----------------
 const P={
@@ -139,6 +139,7 @@ const P={
   driftBase:3, driftAccel:0.7, suppressK:0.10, suppressFloorVsDrift:0.6,
   guard:{revolution:{MIL:.5,POL:.5}, coup:{ELITE:.6,POL:.4}, assassination:{POL:1}, intervention:{MIL:.5,ELITE:.5}},
   survK:0.07, foreignDiscount:0.5,
+  econCardDamp:0.4,  // dampen card ECON effects to fit the 0–100 economy (was sized for 0–300)
   // a danger held genuinely low (survival >= this) cannot kill you — bad luck at
   // calm odds is too punishing, and holding a threat under 10% is hard enough to earn it.
   survFloor:0.90,
@@ -820,9 +821,11 @@ function drawYearCards(){
 const CARD_SCALE=1.5;
 function applyFx(fx){
   for(const k in fx){
-    const d=fx[k]*CARD_SCALE;
+    let d=fx[k]*CARD_SCALE;
     if(k==="ECON"){
-      // economy effects move the REAL economy (and thus next year's budget); the bar mirrors it
+      // ECON deltas were sized for the old 0–300 economy; on the unified 0–100 scale
+      // they must be dampened so a single card can't gut the budget.
+      d*=P.econCardDamp;
       G.econ=clamp(G.econ+d,5,P.econMax);
       G.caps.ECON=Math.round(G.econ);
     }
