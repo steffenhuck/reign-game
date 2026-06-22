@@ -128,7 +128,7 @@
 <body>
 <div class="frame" id="app"></div>
 <script>
-const VERSION="0.3.5";
+const VERSION="0.3.6";
 
 // ---------------- ENGINE PARAMETERS (provisional, 0–100 scale) ----------------
 const P={
@@ -141,6 +141,7 @@ const P={
   guard:{revolution:{MIL:.5,POL:.5}, coup:{ELITE:.6,POL:.4}, assassination:{POL:1}, intervention:{MIL:.5,ELITE:.5}},
   survK:0.07, foreignDiscount:0.5,
   econCardDamp:0.4,  // dampen card ECON effects to fit the 0–100 economy (was sized for 0–300)
+  quietK:0.1667,  // quiet-year weight = quietK×(400−sum of needles); ~1/6 keeps calm reigns peaceful but not sleepy
   // a danger held genuinely low (survival >= this) cannot kill you — bad luck at
   // calm odds is too punishing, and holding a threat under 10% is hard enough to earn it.
   survFloor:0.90,
@@ -1193,11 +1194,17 @@ function endOfYear(){
     d-=Math.min(supp,drift*P.suppressFloorVsDrift);
     G.dangers[t]=clamp(d,0,100);
   }
-  // draw which threat is coming (but DON'T resolve it yet) — the dictator sees it first
-  const roll=Math.floor(Math.random()*5);
+  // draw which threat is coming, weighted by the needles (provocation drives the draw).
+  // Each threat's weight is its needle (0–100). Quiet competes with weight quietK×(400−S),
+  // where S is the sum of needles — so calm reigns are mostly peaceful, provoked ones are not.
   const threats=["revolution","coup","assassination","intervention"];
-  if(roll>=4){ G.lastChallenge={type:"quiet"}; }
-  else{ G.lastChallenge={type:threats[roll]}; }
+  const S=threats.reduce((a,t)=>a+G.dangers[t],0);
+  const weights=threats.map(t=>G.dangers[t]);
+  const quietW=P.quietK*(400-S);
+  const total=S+quietW;
+  let r=Math.random()*total, pick="quiet";
+  for(let i=0;i<threats.length;i++){ if(r<weights[i]){ pick=threats[i]; break; } r-=weights[i]; }
+  G.lastChallenge={type:pick};
   G.phase="challenge"; render();
 }
 
