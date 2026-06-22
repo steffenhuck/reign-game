@@ -128,11 +128,12 @@
 <body>
 <div class="frame" id="app"></div>
 <script>
-const VERSION="0.3.3";
+const VERSION="0.3.4";
 
 // ---------------- ENGINE PARAMETERS (provisional, 0–100 scale) ----------------
 const P={
   capStart:40, dangerStart:10, econStart:55,
+  budgetMult:1.8,  // budget = economy(0–100) × this; a 55 economy yields a ~100 budget to divide
   // economy lives on the same 0–100 scale as everything else; budget = econ directly.
   investGain:0.9, investHalf:60, econDecay:0.05, econMax:100,
   capGain:1.0, capDecay:0.08,
@@ -153,6 +154,7 @@ const DNAMES={revolution:"Revolution",coup:"Coup",assassination:"Assassination",
 const CNAMES={ECON:"Economy",MIL:"Military",POL:"Secret Police",ELITE:"Elite"};
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 const logistic=x=>1/(1+Math.exp(-x));
+const budgetOf=econ=>Math.round(econ*P.budgetMult);  // economy gauge (0–100) -> spendable budget
 
 // ---------------- EVENT CARDS (12) ----------------
 // fx keys: ECON,MIL,POL,ELITE (caps)  REV,COUP,ASSN,INTV (dangers)
@@ -927,7 +929,7 @@ function renderIntro(){
 }
 
 function renderYearStart(){
-  const budget=Math.round(G.econ);
+  const budget=budgetOf(G.econ);
   const prev=G.lastBudget||budget;
   const diff=budget-prev;
   let econLine, econColor;
@@ -954,7 +956,7 @@ function renderYearStart(){
 // budget allocation
 let alloc;
 function renderBudget(){
-  const budget=Math.round(G.econ);
+  const budget=budgetOf(G.econ);
   alloc={extract:0,foreign:0,MIL:0,POL:0,ELITE:0,invest:0};
   // default: spread evenly across defence as a starting suggestion
   app().innerHTML=hudHTML()+consoleHTML()+`
@@ -974,7 +976,7 @@ function renderBudget(){
   updateLeft();
 }
 function allocRow(key,name,desc){
-  const budget=Math.round(G.econ);
+  const budget=budgetOf(G.econ);
   return `<div class="alloc-row">
     <div class="alloc-name">${name}<small>${desc}</small></div>
     <div class="alloc-slider"><input type="range" min="0" max="${budget}" value="0" id="sl_${key}" oninput="onSlide('${key}',this.value)"></div>
@@ -982,7 +984,7 @@ function allocRow(key,name,desc){
   </div>`;
 }
 function onSlide(key,val){
-  const budget=Math.round(G.econ);
+  const budget=budgetOf(G.econ);
   // how much is committed to the OTHER channels right now
   const otherUsed=Object.entries(alloc).reduce((s,[k,v])=>s+(k===key?0:v),0);
   const maxForThis=budget-otherUsed;          // the most this slider may take
@@ -994,7 +996,7 @@ function onSlide(key,val){
   updateLeft();
 }
 function updateLeft(){
-  const budget=Math.round(G.econ);
+  const budget=budgetOf(G.econ);
   const used=Object.values(alloc).reduce((a,b)=>a+b,0);
   const left=budget-used;
   const el=document.getElementById("left"); if(el)el.textContent=left;
@@ -1002,19 +1004,22 @@ function updateLeft(){
   const commit=document.getElementById("commit"); if(commit)commit.disabled=left<0;
 }
 function commitBudget(){
-  G.lastBudget=Math.round(G.econ);  // remember this year's budget for next year's comparison
-  const budget=Math.max(1,Math.round(G.econ));
+  G.lastBudget=budgetOf(G.econ);  // remember this year's budget for next year's comparison
+  const budget=Math.max(1,budgetOf(G.econ));
   const before={dangers:{...G.dangers}, caps:{...G.caps}};
   // apply budget
   G.score+=alloc.extract; G.foreign+=alloc.foreign*P.foreignDiscount;  // half is lost in transit; the stash holds true value
+  // capability/investment slices come from the LARGER budget, but feed 0–100 gauges —
+  // divide by the multiplier so a given budget SHARE has the same effect as before.
+  const toGauge=1/P.budgetMult;
   for(const c of ["MIL","POL","ELITE"]){
     const taper=1-G.caps[c]/100;
-    G.caps[c]=clamp(G.caps[c]*(1-P.capDecay)+alloc[c]*P.capGain*taper,0,100);
+    G.caps[c]=clamp(G.caps[c]*(1-P.capDecay)+alloc[c]*toGauge*P.capGain*taper,0,100);
   }
   // investment grows the economy with diminishing returns, on the 0–100 scale
   const invReturn=P.investGain/(1+G.econ/P.investHalf);
-  G.econ=clamp(G.econ*(1-P.econDecay)+alloc.invest*invReturn,5,P.econMax);
-  G.caps.ECON=Math.round(G.econ); // the Economy bar IS the economy — same scale, always matches the budget
+  G.econ=clamp(G.econ*(1-P.econDecay)+alloc.invest*toGauge*invReturn,5,P.econMax);
+  G.caps.ECON=Math.round(G.econ); // the Economy bar IS the economy — always consistent with the budget
   // extraction directly stokes danger, scaled by the SHARE of budget taken
   const extractFrac=alloc.extract/budget;
   G.dangers.revolution=clamp(G.dangers.revolution+extractFrac*P.extractRevK,0,100);
