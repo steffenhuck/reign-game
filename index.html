@@ -79,6 +79,9 @@
   .card-title{font-size:22px;font-weight:700;margin:4px 0 6px;letter-spacing:.01em}
   .card-situation{font-size:15px;color:var(--ink);font-style:italic;margin-bottom:16px}
   .opt{border:1px solid var(--olive-line);border-radius:4px;padding:13px 15px;margin-bottom:10px;cursor:pointer;background:var(--cream-panel);transition:background .14s,border-color .14s,transform .07s}
+  .opt-gift{border-color:#c9a227;background:#f3ecd0}
+  .opt-gift:hover{border-color:#b8930f;background:#efe6c2}
+  .opt-star{color:#c9a227;font-size:15px;text-shadow:0 0 2px rgba(201,162,39,.4)}
   .opt:hover{background:#e6ebc8;border-color:var(--olive);transform:translateY(-1px)}
   .opt-label{font-size:15px;font-weight:600;margin-bottom:3px}
   .opt-flavor{font-size:12.5px;color:var(--ink-dim);font-style:italic;margin-bottom:7px}
@@ -125,16 +128,20 @@
 <body>
 <div class="frame" id="app"></div>
 <script>
-const VERSION="0.2.3";
+const VERSION="0.3.2";
 
 // ---------------- ENGINE PARAMETERS (provisional, 0–100 scale) ----------------
 const P={
-  capStart:40, dangerStart:10, econStart:100,
-  investGain:0.6, investHalf:250, econDecay:0.05, econMax:300,
+  capStart:40, dangerStart:10, econStart:55,
+  // economy lives on the same 0–100 scale as everything else; budget = econ directly.
+  investGain:0.9, investHalf:60, econDecay:0.05, econMax:100,
   capGain:1.0, capDecay:0.08,
   driftBase:3, driftAccel:0.7, suppressK:0.10, suppressFloorVsDrift:0.6,
   guard:{revolution:{MIL:.5,POL:.5}, coup:{ELITE:.6,POL:.4}, assassination:{POL:1}, intervention:{MIL:.5,ELITE:.5}},
   survK:0.07, foreignDiscount:0.5,
+  // a danger held genuinely low (survival >= this) cannot kill you — bad luck at
+  // calm odds is too punishing, and holding a threat under 10% is hard enough to earn it.
+  survFloor:0.90,
   // naked looting radicalises the street and unsettles elites — scales with the
   // SHARE of budget extracted, so 100% extraction is genuinely alarming.
   extractRevK:18, extractCoupK:6,
@@ -360,6 +367,426 @@ const CARDS=[
    {label:"Purge a symbolic few.",flavor:"A measured culling. The point is taken.",fx:{COUP:-6,ELITE:-6}},
    {label:"Refuse, and reassure the ministries.",flavor:"They serve you gratefully — until the next man with evidence arrives.",fx:{COUP:6,ELITE:6}},
   ]},
+ {cat:"The Outside World",title:"A Diplomatic Overture",
+  sit:"A neutral foreign minister offers to broker your return to good standing among nations — if you make a gesture.",
+  opts:[
+   {label:"Free the dissidents and sign the accords.",flavor:"A humbling bow to outsiders — but the pressure abroad eases markedly.",fx:{INTV:-12,REV:6}},
+   {label:"Make a hollow show of reform.",flavor:"Enough theatre to photograph, not enough to matter.",fx:{INTV:-6,POL:-3}},
+   {label:"Send him home insulted.",flavor:"Pride is satisfying. The dossier on you grows thicker.",fx:{INTV:6}},
+  ]},
+ {cat:"The Outside World",title:"The Summit Invitation",
+  sit:"You are invited to a summit of respectable heads of state. Attending would launder your image; it would also expose you.",
+  opts:[
+   {label:"Attend and charm them.",flavor:"Handshakes and communiqués. The world remembers you are a statesman, or pretends to.",fx:{INTV:-12,ELITE:-6}},
+   {label:"Send your foreign minister.",flavor:"Representation without risk. A modest thaw.",fx:{INTV:-6}},
+   {label:"Boycott it grandly.",flavor:"A speech about sovereignty plays well at home and nowhere else.",fx:{REV:-6,INTV:6}},
+  ]},
+ {cat:"The People",title:"A National Hero Returns",
+  sit:"An exiled war hero, beloved by all, asks to come home. His presence would unite the country — under whom is the question.",
+  opts:[
+   {label:"Welcome him as your own.",flavor:"You stand beside him on the balcony, and borrow his light. The crowds adore the tableau.",fx:{REV:-12,COUP:-6,ELITE:-6},star:true},
+   {label:"Let him return, quietly watched.",flavor:"Home, but shadowed. A small calm, a small risk.",fx:{REV:-6,ASSN:3}},
+   {label:"Bar him at the border.",flavor:"A rival denied — and a beloved man turned into a martyr in waiting.",fx:{REV:6,COUP:-3}},
+  ]},
+ {cat:"The Security Apparatus",title:"The Bodyguard's Warning",
+  sit:"Your most trusted bodyguard reports that your food taster has been approached by strangers with money.",
+  opts:[
+   {label:"Replace the entire household staff.",flavor:"Paranoid, thorough, and effective. You will eat in peace, if not in comfort.",fx:{ASSN:-12,ECON:-6}},
+   {label:"Turn the taster into a double agent.",flavor:"Let them think their man is theirs. You learn who is paying.",fx:{ASSN:-6,COUP:-6}},
+   {label:"Dismiss it as rumour.",flavor:"Trust is a luxury. Sometimes it is also a fatal one.",fx:{ASSN:6}},
+  ]},
+ {cat:"The Elite",title:"The Loyal Old Guard",
+  sit:"The veterans who put you in power are aging and feel forgotten. A gesture would renew their devotion.",
+  opts:[
+   {label:"Honour them with medals and pensions.",flavor:"Cheap symbols, deep loyalty. The old lions purr.",fx:{COUP:-6,ELITE:6,ECON:-6}},
+   {label:"Promote their sons.",flavor:"Continuity bought with patronage. The next generation is bound to you.",fx:{COUP:-6,ELITE:6}},
+   {label:"Let them fade.",flavor:"Gratitude is not a budget line. They remember that they made you.",fx:{COUP:6}},
+  ]},
+ {cat:"Economic Development",title:"A Good Harvest",
+  sit:"The rains came at the right time. The granaries are full and the people, for once, are fed.",
+  opts:[
+   {label:"★ Let the good times be felt.",flavor:"You take a little credit, lower a few prices, and the country exhales. A rare easy year.",fx:{REV:-6,ECON:6,INTV:-3},star:true},
+   {label:"Tax the surplus hard.",flavor:"A full granary is a tempting target. The treasury swells; the gratitude curdles.",fx:{ECON:12,REV:6}},
+   {label:"Export it all for cash.",flavor:"Sell the bounty abroad while your own markets stay bare.",fx:{ECON:6,REV:6,INTV:-3}},
+  ]},
+ {cat:"The People",title:"A Festival of the Nation",
+  sit:"Your advisers propose a vast public festival — bread, circuses, and your face on every banner.",
+  opts:[
+   {label:"Spare no expense.",flavor:"Fireworks, free food, a week of forced joy. The people love a party, briefly.",fx:{REV:-12,ECON:-12}},
+   {label:"A modest celebration.",flavor:"Enough festivity to lift the mood without emptying the vault.",fx:{REV:-6,ECON:-3}},
+   {label:"Cancel it as frivolous.",flavor:"Austere and correct. No one ever rioted out of gratitude, but they do out of boredom.",fx:{REV:6,ECON:3}},
+  ]},
+ {cat:"The Outside World",title:"A Trade Delegation",
+  sit:"Foreign businessmen arrive seeking deals. They bring money and, inevitably, expectations.",
+  opts:[
+   {label:"Open the markets wide.",flavor:"Capital floods in, and with it eyes and interests you cannot fully control.",fx:{ECON:12,INTV:-6,POL:-6}},
+   {label:"Strike narrow, favourable deals.",flavor:"Let your cronies broker the contracts. Everyone of consequence is paid.",fx:{ECON:6,ELITE:6}},
+   {label:"Send them away.",flavor:"Your economy stays small, and entirely yours.",fx:{ECON:-6,INTV:3}},
+  ]},
+ {cat:"The Security Apparatus",title:"The Informant Network",
+  sit:"Your secret police propose blanketing the country in paid informers — neighbours watching neighbours.",
+  opts:[
+   {label:"Build it everywhere.",flavor:"No conversation is private now. Plots wither; so does trust, and the economy with it.",fx:{COUP:-6,ASSN:-6,REV:-6,ECON:-12}},
+   {label:"Target the cities only.",flavor:"Where crowds gather, ears are useful. A focused web.",fx:{REV:-6,COUP:-3}},
+   {label:"Reject it as corrosive.",flavor:"A society of informers eats itself. You decline — and sleep a little less easily.",fx:{COUP:3,REV:3,ECON:3}},
+  ]},
+ {cat:"The Elite",title:"A Marriage Alliance",
+  sit:"A powerful regional clan proposes to marry into your family, binding their fortunes to yours.",
+  opts:[
+   {label:"Bless the union.",flavor:"Blood ties the clan to your survival. They will not coup their own grandchildren.",fx:{COUP:-12,ELITE:6,ECON:-6}},
+   {label:"Accept, but keep them at arm's length.",flavor:"A wedding, and a watchful distance. Useful, not trusted.",fx:{COUP:-6}},
+   {label:"Refuse the match.",flavor:"An insult a proud clan will nurse for a generation.",fx:{COUP:6,ELITE:-6}},
+  ]},
+ {cat:"Unexpected Crisis",title:"An Epidemic Spreads",
+  sit:"A sickness moves through the crowded districts. The hospitals are overwhelmed and the people are frightened.",
+  opts:[
+   {label:"Pour resources into a response.",flavor:"Doctors, supplies, visible competence. Costly, and it earns you something rare: legitimacy.",fx:{REV:-12,ECON:-12,INTV:-6}},
+   {label:"Quarantine the districts by force.",flavor:"Cordons and soldiers. The sickness is contained; so are a great many angry people.",fx:{REV:6,POL:-6,MIL:-6}},
+   {label:"Downplay it and carry on.",flavor:"Admit nothing, fix nothing. The graves fill quietly, then loudly.",fx:{REV:12,INTV:6}},
+  ]},
+ {cat:"The Security Apparatus",title:"A Defector's Files",
+  sit:"An intelligence officer from a hostile power defects, offering a trove of secrets — for a price and a risk.",
+  opts:[
+   {label:"Take him in and use the files.",flavor:"A windfall of intelligence. Plots against you are laid bare — and his old masters want him dead, in your house.",fx:{COUP:-12,ASSN:-6,INTV:6}},
+   {label:"Sell him back quietly.",flavor:"Trade the man for goodwill. Cynical, and it buys a little peace abroad.",fx:{INTV:-6,ELITE:3}},
+   {label:"Turn him away.",flavor:"Too hot to touch. The secrets, and the danger, go elsewhere.",fx:{INTV:3}},
+  ]},
+ {cat:"The Security Apparatus",title:"The Army Wants New Toys",
+  sit:"Your generals present a glossy procurement list: tanks, jets, and a great deal of national pride.",
+  opts:[
+   {label:"Buy it all.",flavor:"A gleaming army and an empty treasury. The generals are, for now, content.",fx:{MIL:12,ECON:-12,COUP:-3}},
+   {label:"Buy selectively.",flavor:"Enough hardware to keep them happy and the budget breathing.",fx:{MIL:6,ECON:-3}},
+   {label:"Tell them to make do.",flavor:"Thrift the soldiers will not thank you for.",fx:{MIL:-6,COUP:6}},
+  ]},
+ {cat:"The Security Apparatus",title:"A Border War Beckons",
+  sit:"A weak neighbour is in chaos. Your generals see an easy annexation and lasting glory.",
+  opts:[
+   {label:"Invade and win quickly.",flavor:"A short, victorious war. The army adores you; the world sharpens its pencils.",fx:{MIL:12,REV:-6,INTV:12}},
+   {label:"Fund proxies instead.",flavor:"Let others bleed in your name. Deniable, and cheaper.",fx:{MIL:6,INTV:6}},
+   {label:"Keep the peace.",flavor:"No glory, no graves, no sanctions. The generals sulk.",fx:{INTV:-6,COUP:3}},
+  ]},
+ {cat:"The People",title:"The Trade Unions Stir",
+  sit:"Factory workers are organizing. A strike could spread to the whole industrial belt.",
+  opts:[
+   {label:"Break the unions with force.",flavor:"Arrests, blacklists, broken doors. The strike dies; the resentment goes underground.",fx:{REV:-6,POL:6,ASSN:6}},
+   {label:"Buy the leaders off.",flavor:"A few quiet payments and a seat at a powerless table. Cheap peace.",fx:{REV:-6,ECON:-6,ELITE:-3}},
+   {label:"Let them strike.",flavor:"Production halts and the example spreads. Patience has a price.",fx:{REV:6,ECON:-6}},
+  ]},
+ {cat:"The Elite",title:"A Governor Grows Too Powerful",
+  sit:"The governor of your richest province is building his own court, his own militia, his own legend.",
+  opts:[
+   {label:"Summon and arrest him.",flavor:"A bold stroke. The threat ends — if the province does not rise in his name.",fx:{COUP:-12,REV:6,MIL:-6}},
+   {label:"Promote him to the capital.",flavor:"Bring him close, strip his base, smother him in honours.",fx:{COUP:-6,ELITE:3}},
+   {label:"Leave him to his fiefdom.",flavor:"A quiet province today, a rival warlord tomorrow.",fx:{COUP:6}},
+  ]},
+ {cat:"The Outside World",title:"A Peace Prize Nomination",
+  sit:"Through obscure machinations, your name has been floated for an international prize. The irony is not lost on you.",
+  opts:[
+   {label:"Campaign for it shamelessly.",flavor:"Release a few prisoners, plant a few trees, hire a few publicists. The world's memory is short.",fx:{INTV:-12,ECON:-6}},
+   {label:"Accept the nomination gracefully.",flavor:"Let the rumour do its quiet laundering.",fx:{INTV:-6}},
+   {label:"Dismiss it as imperialist theatre.",flavor:"A defiant snub that thrills exactly the audience already on your side.",fx:{REV:-3,INTV:6}},
+  ]},
+ {cat:"The Security Apparatus",title:"The Failed Assassin",
+  sit:"A lone gunman got within a corridor of you before he was cut down. The question now is what to make of it.",
+  opts:[
+   {label:"Stage a triumphant survival.",flavor:"Wounded saviour, divine protection, weeping crowds. Fear becomes adoration.",fx:{REV:-12,ASSN:-6,POL:6}},
+   {label:"Hunt his every connection.",flavor:"Pull the thread to its end, whatever it unravels.",fx:{ASSN:-12,REV:6,ELITE:-6}},
+   {label:"Bury the story entirely.",flavor:"Admit no weakness — and learn nothing about who sent him.",fx:{ASSN:6,POL:3}},
+  ]},
+ {cat:"Economic Development",title:"A Currency Crisis",
+  sit:"The national currency is in free-fall. Savings evaporate; the markets panic.",
+  opts:[
+   {label:"Impose harsh controls.",flavor:"Freeze accounts, ban exchange, jail the speculators. Order at the cost of trust.",fx:{ECON:-6,POL:6,REV:6}},
+   {label:"Seek an emergency foreign loan.",flavor:"The money steadies the ship; the lenders attach strings, and watchers.",fx:{ECON:6,INTV:6}},
+   {label:"Print money and pray.",flavor:"Paper over the hole. The hole gets bigger.",fx:{ECON:-12,REV:6}},
+  ]},
+ {cat:"The People",title:"A Beloved Singer Defies You",
+  sit:"The most famous voice in the country has begun slipping dissent into her songs. The young memorize every word.",
+  opts:[
+   {label:"Silence her.",flavor:"A banned singer is a martyr with a back catalogue. The young do not forget a melody.",fx:{REV:6,POL:3,INTV:6}},
+   {label:"Co-opt her with riches.",flavor:"Even rebels have a price. A villa, a tour, a quiet word.",fx:{REV:-6,ECON:-6}},
+   {label:"Ignore her.",flavor:"Songs are only songs — until they are sung in a square by thousands.",fx:{REV:6}},
+  ]},
+ {cat:"The Elite",title:"A Rival's Sudden Wealth",
+  sit:"A mid-ranking minister has become conspicuously, inexplicably rich. He is either skimming, or being funded.",
+  opts:[
+   {label:"Investigate and ruin him.",flavor:"Expose the rot publicly. A warning to all, and one fewer hidden purse.",fx:{COUP:-6,ELITE:-6}},
+   {label:"Demand a cut of it.",flavor:"If he is stealing, he is now stealing for you. Loyalty through complicity.",fx:{ECON:6,COUP:3}},
+   {label:"Watch and wait.",flavor:"Let the thread grow longer before you pull it.",fx:{COUP:3}},
+  ]},
+ {cat:"Unexpected Crisis",title:"A Dam Bursts",
+  sit:"A great state dam — built in your name, with corners cut by your cronies — has failed. Villages are underwater.",
+  opts:[
+   {label:"★ Lead the relief in person.",flavor:"You wade through the mud for the cameras, and mean some of it. The nation sees a leader who came.",fx:{REV:-6,INTV:-3,ELITE:3},star:true},
+   {label:"Blame the engineers.",flavor:"A few arrests, a sturdy scapegoat, and the cronies who skimmed the concrete walk free.",fx:{REV:6,ELITE:6}},
+   {label:"Suppress the death toll.",flavor:"Lower the numbers, raise the cordons. The water recedes; the rumours do not.",fx:{REV:6,INTV:6,POL:-3}},
+  ]},
+ {cat:"The Security Apparatus",title:"The Mercenary Offer",
+  sit:"A foreign private army offers its services — loyal only to your purse, answerable to no general of yours.",
+  opts:[
+   {label:"Hire them as your shield.",flavor:"Men with no local loyalties cannot be turned by local plots. They can, however, be outbid.",fx:{COUP:-12,ASSN:-6,ECON:-12}},
+   {label:"Hire a small detachment.",flavor:"A core of outsiders among your guard. A hedge, not a wall.",fx:{COUP:-6,ECON:-6}},
+   {label:"Refuse — trust your own.",flavor:"Pride in your national army, and the risk that comes with men who have families and grievances.",fx:{MIL:3,COUP:3}},
+  ]},
+ {cat:"The Outside World",title:"A Spy Is Caught",
+  sit:"Your counter-intelligence has caught a foreign agent red-handed. He is a bargaining chip, or a propaganda gift.",
+  opts:[
+   {label:"Trade him for concessions.",flavor:"Quiet diplomacy: a spy returned, a sanction eased, a favour banked.",fx:{INTV:-12,ELITE:3}},
+   {label:"Parade him on television.",flavor:"A confession, a show trial, a rallying cry against foreign meddling.",fx:{REV:-6,INTV:6}},
+   {label:"Turn him and send him back.",flavor:"A double agent is worth more than a prisoner. Patient, and risky.",fx:{INTV:-6,POL:6}},
+  ]},
+ {cat:"The People",title:"A Miracle Is Reported",
+  sit:"In a poor village, pilgrims claim a holy vision. Crowds are gathering. The clergy await your reaction.",
+  opts:[
+   {label:"Endorse the miracle.",flavor:"Wrap your rule in the divine. The faithful see heaven smiling on your reign.",fx:{REV:-12,POL:-3,ELITE:3}},
+   {label:"Quietly investigate it.",flavor:"Neither believer nor heretic. A cautious distance.",fx:{REV:-3}},
+   {label:"Denounce it as superstition.",flavor:"Reason is admirable and, here, expensive. The devout do not forgive insult.",fx:{REV:6,INTV:-3}},
+  ]},
+ {cat:"The Elite",title:"The Banker's Proposition",
+  sit:"A discreet international banker offers to manage the regime's wealth — and yours — for a tidy commission.",
+  opts:[
+   {label:"Place everything in his hands.",flavor:"Sophisticated, efficient, and now a stranger knows precisely where the bodies and the money are buried.",fx:{ECON:6,ASSN:6}},
+   {label:"Give him a portion.",flavor:"A toe in the water of respectable finance.",fx:{ECON:6}},
+   {label:"Keep it in the vaults.",flavor:"Old-fashioned, opaque, and entirely under your eye.",fx:{ECON:-3,COUP:-3}},
+  ]},
+ {cat:"The Security Apparatus",title:"A Leak at the Top",
+  sit:"Secret deliberations are appearing in the foreign press. Someone in your inner circle is talking.",
+  opts:[
+   {label:"Interrogate the whole circle.",flavor:"Suspicion turned inward. The leak may stop; the trust certainly does.",fx:{COUP:-6,ELITE:-12,POL:6}},
+   {label:"Feed each suspect a different lie.",flavor:"Watch which falsehood surfaces abroad. Elegant, patient detective work.",fx:{COUP:-6,ASSN:-3}},
+   {label:"Ignore it and change nothing.",flavor:"A talking minister is a growing wound.",fx:{COUP:6,INTV:3}},
+  ]},
+ {cat:"The Outside World",title:"A Neighbour Falls",
+  sit:"The dictator next door has just been overthrown. His fate is on every screen in your country.",
+  opts:[
+   {label:"Crack down preemptively.",flavor:"Show your people that here, the ending will be different. Fear, freshly stoked.",fx:{REV:-6,POL:6,ASSN:6}},
+   {label:"Offer the fallen man asylum.",flavor:"A gesture of solidarity among survivors — and a useful precedent for your own exit.",fx:{ELITE:6,INTV:6}},
+   {label:"Say nothing and watch closely.",flavor:"Let the lesson speak for itself. Your people are watching it too.",fx:{REV:6}},
+  ]},
+ {cat:"Economic Development",title:"The Great Project",
+  sit:"Your engineers propose a monumental public work — a dam, a city, a tower — that would bear your name for centuries.",
+  opts:[
+   {label:"Build the monument.",flavor:"Glory in concrete, and a fortune poured into it. The cranes rise; the treasury sinks.",fx:{ECON:-12,REV:-6,ELITE:6}},
+   {label:"Build a modest version.",flavor:"A sensible legacy, half the cost, half the grandeur.",fx:{ECON:-6,REV:-3}},
+   {label:"Pocket the budget instead.",flavor:"Announce the project, build nothing, redirect the funds. The blueprints gather dust.",fx:{ECON:6,REV:6}},
+  ]},
+ {cat:"The People",title:"A Generation Comes of Age",
+  sit:"The first generation raised entirely under your rule is now grown — and restless in ways you did not expect.",
+  opts:[
+   {label:"★ Open doors for the young.",flavor:"Jobs, scholarships, a stake in your system. Cynical, generous, and it works: the young invest in you.",fx:{REV:-6,ECON:-3,COUP:-3},star:true},
+   {label:"Tighten the schools and screens.",flavor:"Mould them harder. Indoctrination is cheaper than opportunity, and more brittle.",fx:{REV:-3,POL:3,ECON:-3}},
+   {label:"Dismiss their restlessness.",flavor:"The young are always restless. Until, occasionally, they are a revolution.",fx:{REV:12}},
+  ]},
+ {cat:"The Elite",title:"The Succession Whispers",
+  sit:"Your barons have begun, very quietly, to wonder aloud who comes after you. The whispers themselves are dangerous.",
+  opts:[
+   {label:"Name a weak heir.",flavor:"A successor too feeble to plot, too placed to ignore. The whispers settle on a safe name.",fx:{COUP:-6,ELITE:3}},
+   {label:"Name no one, and watch.",flavor:"Ambiguity keeps them guessing and rivalrous — and keeps you the only fixed point.",fx:{COUP:3,ELITE:-3}},
+   {label:"Punish the whisperers.",flavor:"Make the subject itself forbidden. Fear silences the talk and deepens it.",fx:{COUP:6,POL:3,ASSN:3}},
+  ]},
+ {cat:"The Security Apparatus",title:"A Prison Overflows",
+  sit:"Your jails are full past breaking. The wardens want a solution before the overcrowding becomes a scandal.",
+  opts:[
+   {label:"Quietly release the minor cases.",flavor:"Pragmatic mercy. The pressure eases, and a few thousand grateful souls go home.",fx:{REV:-6,POL:-3}},
+   {label:"Build more prisons.",flavor:"A growth industry. The cells multiply and so does the cost.",fx:{ECON:-6,POL:6}},
+   {label:"Let conditions deteriorate.",flavor:"Neglect as policy. The prisons become a horror, and then a headline.",fx:{INTV:6,REV:3}},
+  ]},
+ {cat:"The Outside World",title:"A Diaspora Plots Abroad",
+  sit:"Exiles in foreign capitals are organizing, fundraising, and lobbying against you with growing success.",
+  opts:[
+   {label:"Reach across with an amnesty.",flavor:"Invite the moderates home with promises. Split the exiles, soften the foreign mood.",fx:{INTV:-6,REV:-3,ASSN:3}},
+   {label:"Pursue them abroad.",flavor:"Agents, pressure, the long arm. Effective, and exactly the headline they wanted.",fx:{INTV:12,ASSN:-3}},
+   {label:"Ignore them as irrelevant.",flavor:"Distant voices — until a foreign parliament starts listening.",fx:{INTV:6}},
+  ]},
+ {cat:"Economic Development",title:"A Resource Boom",
+  sit:"World prices for your chief export have suddenly soared. Money is pouring in faster than you can spend it.",
+  opts:[
+   {label:"Bank it and invest wisely.",flavor:"Restraint in a boom is rare and wise. The economy strengthens for the lean years ahead.",fx:{ECON:12,REV:-3},star:true},
+   {label:"Spend it on patronage.",flavor:"Shower the elite and the cities while the sun shines. Loyalty, bought at the peak.",fx:{ELITE:6,REV:-6,ECON:-3}},
+   {label:"Let it vanish into accounts.",flavor:"A boom is a fine time for a great deal to quietly go missing.",fx:{REV:6,ECON:-3}},
+  ]},
+ {cat:"The People",title:"A Martyr's Funeral",
+  sit:"A dissident has died — your hand is suspected — and the funeral threatens to become the largest gathering in years.",
+  opts:[
+   {label:"Permit it, heavily policed.",flavor:"Let them grieve under watchful eyes. Suppression would only swell the crowd.",fx:{REV:-3,POL:3,INTV:3}},
+   {label:"Ban the funeral outright.",flavor:"Deny them the gathering and hand them a grievance instead.",fx:{REV:12,POL:3,INTV:6}},
+   {label:"Send official condolences.",flavor:"Audacious theatre: mourn the man you may have killed. It disarms as many as it disgusts.",fx:{REV:-6,INTV:-3}},
+  ]},
+ {cat:"The Elite",title:"A Coup Is Rumoured for Tonight",
+  sit:"Frantic intelligence: a faction may move against you within hours. The reports are urgent but unconfirmed.",
+  opts:[
+   {label:"Strike first, arrest the faction.",flavor:"Move before they do. If the rumour was true, you are saved; if false, you have made it true next time.",fx:{COUP:-12,ELITE:-6,MIL:-3}},
+   {label:"Summon loyal troops and wait.",flavor:"Defend, don't provoke. Show strength, force their hand or their retreat.",fx:{COUP:-6,MIL:3}},
+   {label:"Dismiss it as panic.",flavor:"Cry wolf too often and the guard sleeps. But this time?",fx:{COUP:6}},
+  ]},
+ {cat:"The Security Apparatus",title:"The Loyalty of the Guard",
+  sit:"Your palace garrison has not been paid in two months. The paymaster is apologetic; the soldiers are not.",
+  opts:[
+   {label:"Pay them double, at once.",flavor:"Nothing buys a guardsman like back-pay and a bonus. They will take a bullet for the next quarter at least.",fx:{ASSN:-12,COUP:-6,ECON:-12}},
+   {label:"Pay what is owed.",flavor:"The minimum that loyalty requires. Grudging service resumes.",fx:{ASSN:-6,ECON:-6}},
+   {label:"Promise them next month.",flavor:"An unpaid man with a rifle outside your door is a poor economy.",fx:{ASSN:12,COUP:6}},
+  ]},
+ {cat:"The Security Apparatus",title:"A Rebel Stronghold",
+  sit:"Armed insurgents have dug into a mountain region. Your generals want a decisive campaign.",
+  opts:[
+   {label:"Crush them with overwhelming force.",flavor:"A hammer blow. The rebellion breaks, the mountains burn, and the world counts the refugees.",fx:{REV:-12,MIL:6,INTV:12}},
+   {label:"Starve them with a blockade.",flavor:"Patient encirclement. Slower, quieter, and the army holds its strength.",fx:{REV:-6,MIL:3}},
+   {label:"Negotiate a ceasefire.",flavor:"Talk to terrorists, the generals spit. But the guns fall silent and the world approves.",fx:{REV:-3,INTV:-6,COUP:3}},
+  ]},
+ {cat:"The People",title:"The Schoolteachers Resign",
+  sit:"Across the country, underpaid teachers are walking out. A generation's schooling hangs in the balance.",
+  opts:[
+   {label:"Meet their demands.",flavor:"Pay rises and apologies. Expensive, popular, and the classrooms fill again.",fx:{REV:-6,ECON:-6}},
+   {label:"Replace them with loyalists.",flavor:"Sack the strikers, install the faithful. The curriculum improves, by your lights.",fx:{REV:6,POL:3}},
+   {label:"Wait them out.",flavor:"Empty schools and idle, angry youth in the streets. A gamble against time.",fx:{REV:12}},
+  ]},
+ {cat:"The Elite",title:"A General's Daughter Weds",
+  sit:"Your top general invites you to his daughter's lavish wedding. Attendance, or absence, will be read by everyone.",
+  opts:[
+   {label:"Attend and toast them warmly.",flavor:"A public embrace of your most dangerous soldier. Bonds renewed before all the court.",fx:{COUP:-6,MIL:3,ELITE:3}},
+   {label:"Send a magnificent gift.",flavor:"Honour without exposure. The general is flattered, the message clear.",fx:{COUP:-3,ELITE:3}},
+   {label:"Decline, citing affairs of state.",flavor:"A snub the whole officer corps will notice and weigh.",fx:{COUP:6,MIL:-3}},
+  ]},
+ {cat:"Economic Development",title:"A Foreign Factory Closes",
+  sit:"A major foreign employer is pulling out, taking thousands of jobs. The industrial towns are bracing for ruin.",
+  opts:[
+   {label:"Nationalize the plant.",flavor:"Seize it, run it, save the jobs — and terrify every other foreign investor watching.",fx:{REV:-6,ECON:-6,INTV:6}},
+   {label:"Lure a replacement with subsidies.",flavor:"Bribe new capital to take its place. Costly courtship, steadier ground.",fx:{ECON:-3,INTV:-3}},
+   {label:"Let the towns fend for themselves.",flavor:"The market giveth and taketh. The towns will remember which.",fx:{REV:12,ECON:3}},
+  ]},
+ {cat:"The Security Apparatus",title:"An Officer's Devotion",
+  sit:"A young colonel has uncovered and foiled a plot entirely on his own initiative, asking nothing in return.",
+  opts:[
+   {label:"★ Reward and promote him.",flavor:"Loyalty like this, seen to be rewarded, breeds more of it. The whole corps takes note.",fx:{COUP:-6,ASSN:-3,MIL:3},star:true},
+   {label:"Reward him, then watch him.",flavor:"A man this capable and this lucky bears observing. Gratitude, with a shadow.",fx:{COUP:-3,ASSN:-3}},
+   {label:"Take the credit yourself.",flavor:"Claim the foiled plot as your own vigilance. The colonel learns what devotion earns.",fx:{COUP:3,MIL:-3}},
+  ]},
+ {cat:"The People",title:"A River Runs Dry",
+  sit:"The great river that feeds the capital is failing. Water rationing looms, and with it unrest.",
+  opts:[
+   {label:"Build emergency works at speed.",flavor:"Pipelines, wells, visible urgency. Costly competence that the thirsty will remember.",fx:{REV:-6,ECON:-12}},
+   {label:"Ration by district, by loyalty.",flavor:"The faithful neighbourhoods stay wet. The restless ones learn the price of dissent.",fx:{REV:6,POL:3}},
+   {label:"Blame the upstream neighbour.",flavor:"Turn drought into diplomacy-by-grievance. The taps stay dry; the anger points outward.",fx:{REV:3,INTV:6}},
+  ]},
+ {cat:"The Elite",title:"The Court Astrologer",
+  sit:"Your superstitious inner circle has fallen under the sway of a charismatic mystic who claims to read the regime's fate.",
+  opts:[
+   {label:"Adopt him as your oracle.",flavor:"Bind the barons' belief to your blessing. A strange new lever over frightened men.",fx:{COUP:-6,POL:-3,ELITE:3}},
+   {label:"Expose him as a fraud.",flavor:"Reason restored, mystery dispelled — and the disappointed faithful resent the messenger.",fx:{ELITE:-3,COUP:3}},
+   {label:"Have him quietly vanish.",flavor:"A rival influence removed. His followers wonder, and whisper.",fx:{COUP:-3,ASSN:3}},
+  ]},
+ {cat:"The Outside World",title:"An Arms Embargo",
+  sit:"Foreign powers move to cut off your weapons supply. Your arsenals will not replenish themselves.",
+  opts:[
+   {label:"Buy from the black market.",flavor:"Shadier suppliers, higher prices, fewer questions. The guns keep coming.",fx:{MIL:6,ECON:-6,INTV:3}},
+   {label:"Build a domestic arms industry.",flavor:"Slow, costly self-reliance. In time, no embargo can touch you.",fx:{MIL:3,ECON:-6,INTV:-3}},
+   {label:"Sue for diplomatic relief.",flavor:"Concessions in exchange for hardware. The world extracts its price.",fx:{INTV:-6,MIL:-3}},
+  ]},
+ {cat:"The People",title:"A Viral Humiliation",
+  sit:"A video mocking you — clever, cruel, and very funny — is spreading faster than your censors can move.",
+  opts:[
+   {label:"Hunt down the creator.",flavor:"Make an example. The video spreads twice as fast now, with your reaction as the punchline.",fx:{REV:6,POL:3,INTV:3}},
+   {label:"Laugh it off publicly.",flavor:"Disarm the joke by sharing it. A confident tyrant is harder to mock.",fx:{REV:-6,INTV:-3}},
+   {label:"Black out the networks.",flavor:"Kill the internet to kill the clip. The economy screams; the joke becomes legend.",fx:{REV:3,ECON:-6,INTV:3}},
+  ]},
+ {cat:"The Security Apparatus",title:"The Veterans' Grievance",
+  sit:"Disabled veterans of your wars are protesting outside the ministry, medals on their chests and anger in their voices.",
+  opts:[
+   {label:"Honour and compensate them.",flavor:"The men who bled for you, paid at last. The army's heart, and the public's, softens.",fx:{REV:-6,MIL:3,ECON:-6}},
+   {label:"Disperse them discreetly.",flavor:"Move the embarrassment along quietly. The medals make for bad photographs.",fx:{REV:3,MIL:-3}},
+   {label:"Brand them traitors.",flavor:"Turn heroes into enemies. Even the loyal soldiers watching grow cold.",fx:{REV:6,MIL:-6,COUP:3}},
+  ]},
+ {cat:"Economic Development",title:"A Tech Visionary Courts You",
+  sit:"A brilliant young entrepreneur offers to modernize the state — surveillance, services, efficiency — if given free rein.",
+  opts:[
+   {label:"Hand him the keys.",flavor:"A digital state, ruthlessly efficient — and a clever young man who now knows everything.",fx:{POL:12,ECON:6,COUP:3}},
+   {label:"Take the tools, not the man.",flavor:"Buy his systems, sideline his ambitions. Capability without the rival.",fx:{POL:6,ECON:-3}},
+   {label:"Reject it as a Trojan horse.",flavor:"Some doors, once opened, cannot be closed. You keep yours shut.",fx:{POL:-3,ECON:-3}},
+  ]},
+ {cat:"The Elite",title:"The Inner Circle Splits",
+  sit:"Your two closest advisers — old friends, both indispensable — have come to hate each other, and demand you choose.",
+  opts:[
+   {label:"Side with the abler one.",flavor:"Reward competence, lose the other's heart. A sharper court, a colder one.",fx:{COUP:3,ELITE:-3}},
+   {label:"Force a public reconciliation.",flavor:"Make them embrace before the court. Neither forgives you for the humiliation.",fx:{COUP:-3,ELITE:-3}},
+   {label:"Elevate a third to balance them.",flavor:"Divide their power, multiply your options. The oldest trick, still the best.",fx:{COUP:-6,ELITE:3}},
+  ]},
+ {cat:"The Outside World",title:"A Superpower Takes Interest",
+  sit:"A global power has begun paying you attention — courtship or threat, it is hard to tell which.",
+  opts:[
+   {label:"Align yourself openly.",flavor:"Shelter under a giant's wing. Protected, and now a piece on someone else's board.",fx:{INTV:-12,MIL:6,COUP:-3}},
+   {label:"Play them against a rival power.",flavor:"Court two suitors, commit to neither. Lucrative, exhausting, and precarious.",fx:{ECON:6,INTV:3}},
+   {label:"Insist on neutrality.",flavor:"Bow to no giant. Admirable, lonely, and quietly resented by both.",fx:{INTV:6}},
+  ]},
+ {cat:"The People",title:"A Census of Discontent",
+  sit:"Your own pollsters bring grim private numbers: your support is hollow, your fear-factor fading.",
+  opts:[
+   {label:"Launch a charm offensive.",flavor:"Tours, gifts, listening sessions, a softer face. Manufactured warmth, and some of it lands.",fx:{REV:-6,ECON:-6,INTV:-3}},
+   {label:"Tighten the apparatus of fear.",flavor:"If they will not love you, ensure they fear you. The old reliable.",fx:{REV:-6,POL:3,ASSN:3}},
+   {label:"Bury the numbers.",flavor:"Shoot the messenger, believe the propaganda. Comfortable, and blind.",fx:{REV:6,POL:-3}},
+  ]},
+ {cat:"The Security Apparatus",title:"The Bodyguards' Bond",
+  sit:"Your personal protection detail has served loyally for years. Their commander asks only that you trust them fully.",
+  opts:[
+   {label:"★ Trust them, and show it.",flavor:"Loyalty answered with loyalty. Men who feel trusted guard you with their lives, not just their contracts.",fx:{ASSN:-6,COUP:-3},star:true},
+   {label:"Rotate them regularly.",flavor:"No detail grows too close, too comfortable, too bought. Safe, and a little lonely.",fx:{ASSN:-3,COUP:-3}},
+   {label:"Plant spies among them.",flavor:"Watch your own watchers. Prudent paranoia, and they can tell.",fx:{ASSN:3,COUP:-3}},
+  ]},
+ {cat:"Economic Development",title:"A Debt Comes Due",
+  sit:"Years of borrowing have caught up. Foreign creditors want payment, or terms, or your dignity.",
+  opts:[
+   {label:"Default defiantly.",flavor:"Tear up the IOUs and dare them to act. Free of debt, frozen out of every market.",fx:{ECON:-6,REV:-3,INTV:6}},
+   {label:"Renegotiate, painfully.",flavor:"Austerity, oversight, swallowed pride. The creditors relent; the people pay.",fx:{ECON:6,REV:6,INTV:-6}},
+   {label:"Borrow more to pay the old.",flavor:"Dig the hole deeper and call it daylight. The reckoning waits, larger.",fx:{ECON:-3,INTV:3}},
+  ]},
+ {cat:"The Elite",title:"A Crown for the Choosing",
+  sit:"Flatterers urge you to abandon the fiction of republic and crown yourself outright. The temptation is real.",
+  opts:[
+   {label:"Take the crown.",flavor:"Permanence, majesty, a throne for your line — and every republican in the land newly enraged.",fx:{COUP:-6,REV:12,ELITE:6}},
+   {label:"Keep the republican mask.",flavor:"Rule absolutely while bowing to forms. The hypocrisy is load-bearing.",fx:{REV:-3,INTV:-3}},
+   {label:"Hold a 'spontaneous' referendum.",flavor:"Let the people 'beg' you to rule forever. The theatre fools your friends, at least.",fx:{REV:3,POL:3,INTV:3}},
+  ]},
+ {cat:"The People",title:"A Folk Uprising in the Hills",
+  sit:"Remote villages, long ignored, have stopped paying taxes and obeying officials. It is not yet rebellion. Not yet.",
+  opts:[
+   {label:"Send troops to make examples.",flavor:"Burn a village, cow the rest. Order restored, and a grievance planted for a generation.",fx:{REV:-6,MIL:-3,INTV:6}},
+   {label:"Send officials with concessions.",flavor:"Roads, schools, a lighter hand. Buy their obedience cheaper than you could beat it.",fx:{REV:-6,ECON:-6}},
+   {label:"Leave the hills to themselves.",flavor:"A small ungoverned space today; a rebel sanctuary tomorrow.",fx:{REV:6}},
+  ]},
+ {cat:"The Outside World",title:"A Journalist's Investigation",
+  sit:"A foreign reporter is assembling an exposé of your regime's darkest dealings. Publication looms.",
+  opts:[
+   {label:"Discredit and smear the reporter.",flavor:"Flood the zone with counter-stories. Muddy enough water hides a great deal.",fx:{INTV:3,POL:3}},
+   {label:"Offer an exclusive, flattering access.",flavor:"Charm the wolf with a softer story. Cynical, and sometimes it even works.",fx:{INTV:-6,ELITE:-3}},
+   {label:"Silence the source at home.",flavor:"Cut the investigation's local roots. Brutal, effective, and precisely the next headline.",fx:{REV:-3,INTV:12,ASSN:3}},
+  ]},
+ {cat:"The Security Apparatus",title:"The Surveillance Windfall",
+  sit:"Your intelligence chief reports a breakthrough: the new monitoring system has mapped every dissident network at once.",
+  opts:[
+   {label:"Roll up every network now.",flavor:"A single devastating sweep. The opposition is gutted overnight — and the cells you missed go very deep underground.",fx:{REV:-12,COUP:-6,ASSN:6,INTV:6}},
+   {label:"Watch and pick them off slowly.",flavor:"Let the map mature. Patience turns a windfall into a lasting advantage.",fx:{REV:-6,COUP:-3,ASSN:-3}},
+   {label:"Use it only against true threats.",flavor:"Restraint with a loaded weapon. The networks stay mapped, the backlash unprovoked.",fx:{COUP:-3,REV:-3}},
+  ]},
+ {cat:"The Elite",title:"A Faithful Servant Dies",
+  sit:"The old minister who served you longest and most loyally has died. The succession to his powerful office is open.",
+  opts:[
+   {label:"Install your own creature.",flavor:"A loyal nonentity in a mighty seat. Control, at the cost of competence.",fx:{COUP:-6,ELITE:-3,ECON:-3}},
+   {label:"Let the ministries choose.",flavor:"A gesture of trust that buys real goodwill among the barons.",fx:{ELITE:6,COUP:3}},
+   {label:"Abolish the office entirely.",flavor:"Too much power to hand anyone. Split it, scatter it, weaken the seat itself.",fx:{COUP:-6,ECON:-3,ELITE:-3}},
+  ]},
+ {cat:"Economic Development",title:"A Golden Investment Offer",
+  sit:"A sovereign wealth fund offers an enormous, no-strings investment in your infrastructure. It seems too good to be true.",
+  opts:[
+   {label:"Accept the windfall.",flavor:"Roads, ports, power — and a foreign creditor who will, one day, remember it is owed.",fx:{ECON:12,INTV:3}},
+   {label:"Accept a modest tranche.",flavor:"Take enough to matter, not enough to mortgage the country.",fx:{ECON:6}},
+   {label:"Decline politely.",flavor:"No such gift is free. You keep your independence and your potholes.",fx:{ECON:-3,INTV:-3}},
+  ]},
+ {cat:"The People",title:"A Moment of Genuine Triumph",
+  sit:"Against all expectation, the national team has won a great international victory. The whole country is delirious with joy.",
+  opts:[
+   {label:"★ Bask in the national joy.",flavor:"You wave from the balcony as the crowds roar, and for one shining day the country and its tyrant are one.",fx:{REV:-12,INTV:-3,ELITE:3},star:true},
+   {label:"Claim the victory as your own.",flavor:"Insert yourself into every photograph. The joy curdles slightly at the edges.",fx:{REV:-6,ELITE:-3}},
+   {label:"Exploit the distraction.",flavor:"While they celebrate, move against your enemies unwatched. Cold, efficient, unloved.",fx:{REV:-3,COUP:-6,ASSN:3}},
+  ]},
 ];
 
 // ---------------- GAME STATE ----------------
@@ -367,7 +794,7 @@ let G;
 function newGame(){
   G={
     year:1, score:0, foreign:0, econ:P.econStart,
-    caps:{ECON:P.capStart,MIL:P.capStart,POL:P.capStart,ELITE:P.capStart},
+    caps:{ECON:P.econStart,MIL:P.capStart,POL:P.capStart,ELITE:P.capStart},
     dangers:{revolution:P.dangerStart,coup:P.dangerStart,assassination:P.dangerStart,intervention:P.dangerStart},
     phase:"intro", deck:[], cardIdx:0, yearCards:[], lastChallenge:null,
   };
@@ -394,7 +821,12 @@ const CARD_SCALE=1.5;
 function applyFx(fx){
   for(const k in fx){
     const d=fx[k]*CARD_SCALE;
-    if(k in G.caps) G.caps[k]=clamp(G.caps[k]+d,0,100);
+    if(k==="ECON"){
+      // economy effects move the REAL economy (and thus next year's budget); the bar mirrors it
+      G.econ=clamp(G.econ+d,5,P.econMax);
+      G.caps.ECON=Math.round(G.econ);
+    }
+    else if(k in G.caps) G.caps[k]=clamp(G.caps[k]+d,0,100);
     else if(k in DKEY) G.dangers[DKEY[k]]=clamp(G.dangers[DKEY[k]]+d,0,100);
   }
 }
@@ -576,9 +1008,10 @@ function commitBudget(){
     const taper=1-G.caps[c]/100;
     G.caps[c]=clamp(G.caps[c]*(1-P.capDecay)+alloc[c]*P.capGain*taper,0,100);
   }
+  // investment grows the economy with diminishing returns, on the 0–100 scale
   const invReturn=P.investGain/(1+G.econ/P.investHalf);
-  G.econ=clamp(G.econ*(1-P.econDecay)+alloc.invest*invReturn,20,P.econMax);
-  G.caps.ECON=clamp(G.econ/3,0,100); // ECON capability mirrors economy (display)
+  G.econ=clamp(G.econ*(1-P.econDecay)+alloc.invest*invReturn,5,P.econMax);
+  G.caps.ECON=Math.round(G.econ); // the Economy bar IS the economy — same scale, always matches the budget
   // extraction directly stokes danger, scaled by the SHARE of budget taken
   const extractFrac=alloc.extract/budget;
   G.dangers.revolution=clamp(G.dangers.revolution+extractFrac*P.extractRevK,0,100);
@@ -593,8 +1026,9 @@ function commitBudget(){
 function renderCard(){
   const c=G.yearCards[G.cardIdx];
   const optsHTML=c.opts.map((o,i)=>{
-    return `<div class="opt" onclick="chooseOpt(${i})">
-      <div class="opt-label">${o.label}</div>
+    const star = o.star ? `<span class="opt-star" title="A rare reprieve">★</span> ` : "";
+    return `<div class="opt${o.star?' opt-gift':''}" onclick="chooseOpt(${i})">
+      <div class="opt-label">${star}${o.label}</div>
       <div class="opt-flavor">${o.flavor}</div>
     </div>`;
   }).join("");
@@ -813,7 +1247,8 @@ function faceChallenge(){
   const ch=G.lastChallenge;
   const t=ch.type;
   const pSurv=logistic(P.survK*(defenseFor(t)-G.dangers[t]));
-  const survived=Math.random()<pSurv;
+  // if you've held the danger genuinely low, bad luck cannot end you
+  const survived = pSurv>=P.survFloor ? true : Math.random()<pSurv;
   if(survived){
     G.phase="challenge_result"; G.lastChallenge.survived=true; render();
   } else {
