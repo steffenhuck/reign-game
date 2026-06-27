@@ -25,7 +25,8 @@
 
   /* masthead */
   header{padding:30px 26px 18px;text-align:center}
-  .eyebrow{text-align:left;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--olive);font-weight:600;line-height:1.6;margin-bottom:16px}
+  .eyebrow{display:block;text-align:left;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--olive);font-weight:600;line-height:1.6;margin-bottom:16px;text-decoration:none;transition:color .15s}
+  a.eyebrow:hover{color:var(--red)}
   .eyebrow span{display:block}
   .intro-body p{font-size:15px;margin-bottom:14px;max-width:600px}
   .intro-body em{font-style:italic;color:var(--olive);font-weight:600}
@@ -128,7 +129,7 @@
 <body>
 <div class="frame" id="app"></div>
 <script>
-const VERSION="0.4.0";
+const VERSION="1.4.0";
 
 // ---------------- ENGINE PARAMETERS (provisional, 0–100 scale) ----------------
 const P={
@@ -915,7 +916,7 @@ function render(){
 function renderIntro(){
   app().innerHTML=`
   <header>
-    <div class="eyebrow"><span>The Institute</span><span>for the Advancement</span><span>of Dictatorships</span></div>
+    <a class="eyebrow" href="https://the-institute.ch" target="_blank" rel="noopener"><span>The Institute</span><span>for the Advancement</span><span>of Dictatorships</span></a>
     <h1>The Reign<span class="sub2">Game</span></h1>
     <div class="sub">A Practical Examination · Field Module v${VERSION}</div>
   </header>
