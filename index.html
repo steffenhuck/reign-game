@@ -128,28 +128,30 @@
 <body>
 <div class="frame" id="app"></div>
 <script>
-const VERSION="0.3.6";
+const VERSION="0.4.0";
 
 // ---------------- ENGINE PARAMETERS (provisional, 0–100 scale) ----------------
 const P={
   capStart:40, dangerStart:10, econStart:55,
-  budgetMult:1.8,  // budget = economy(0–100) × this; a 55 economy yields a ~100 budget to divide
+  budgetMult:1.818,  // budget = economy(0–100) × this; a 55 economy yields a clean 100 budget to divide
   // economy lives on the same 0–100 scale as everything else; budget = econ directly.
   investGain:0.9, investHalf:60, econDecay:0.05, econMax:100,
   capGain:1.0, capDecay:0.08,
-  driftBase:3, driftAccel:0.7, suppressK:0.13, suppressBase:15, suppressFloorVsDrift:0.9,
+  driftBase:7, driftAccel:0.7, suppressK:0.13, suppressBase:15, suppressFloorVsDrift:0.9,
   guard:{revolution:{MIL:.5,POL:.5}, coup:{ELITE:.6,POL:.4}, assassination:{POL:1}, intervention:{MIL:.5,ELITE:.5}},
-  survK:0.07, foreignDiscount:0.5,
+  survK:0.07, foreignMult:1.5,  // money sent abroad GROWS (smarter foreign economies) but is locked out of local use and only realised if you flee
   econCardDamp:0.4,  // dampen card ECON effects to fit the 0–100 economy (was sized for 0–300)
   quietK:0.1667,  // quiet-year weight = quietK×(400−sum of needles); ~1/6 keeps calm reigns peaceful but not sleepy
   // a danger held genuinely low (survival >= this) cannot kill you — bad luck at
   // calm odds is too punishing, and holding a threat under 10% is hard enough to earn it.
   survFloor:0.90,
+  // early-game grace: the survival floor starts at 1.0 (year 1 cannot kill you) and
+  // tapers to survFloor by year 4, while defenses are still being built.
+  graceFloors:{1:1.0, 2:0.97, 3:0.93},
   // naked looting radicalises the street and unsettles elites — scales with the
   // SHARE of budget extracted, so 100% extraction is genuinely alarming.
   extractRevK:18, extractCoupK:6,
-  penalty:{coup:50,revolution:75,intervention:100,assassination:125},
-  penaltyClawFrac:0.35,
+  penalty:{coup:15,revolution:23,intervention:30,assassination:38},
 };
 const DNAMES={revolution:"Revolution",coup:"Coup",assassination:"Assassination",intervention:"Intervention"};
 const CNAMES={ECON:"Economy",MIL:"Military",POL:"Secret Police",ELITE:"Elite"};
@@ -919,7 +921,7 @@ function renderIntro(){
   </header>
   <div class="pad intro-body">
     <p>You have taken power. The pleasant part is over.</p>
-    <p>Each year, your economy yields a budget. You may <em>extract</em> it — wealth banked to your name, the only score that counts — or pour it into the <em>military, secret police, and elite</em> who keep the knives away, or build <em>public works</em> that grow the economy and swell every budget to come, or quietly move it <em>abroad</em> — though half is lost in the moving — for a rainier day. Every coin spent enjoying power is a coin not spent surviving it.</p>
+    <p>Each year, your economy yields a budget. You may <em>extract</em> it — wealth banked to your name, the only score that counts — or pour it into the <em>military, secret police, and elite</em> who keep the knives away, or build <em>public works</em> that grow the economy and swell every budget to come, or quietly move it <em>abroad</em>, where it grows in smarter economies — though it is locked away, useless at home, and yours only if you flee in time. Every coin spent enjoying power is a coin not spent surviving it.</p>
     <p>Six matters will cross your desk each year, each a small dilemma. Then the annual reckoning: revolution, coup, assassination, or foreign intervention — drawn by fate, survived by your strength. Your four threat dials tell you how exposed you are. <em>Watch the needles.</em></p>
     <p>And one door is always open. When a threat is announced, you may <em>flee into exile</em> and live out your days on what you stashed abroad — yours to keep in full, though half was lost getting it there. Every dictator overstays. The art is knowing the year to leave.</p>
     <div style="text-align:center;margin-top:26px">
@@ -964,7 +966,7 @@ function renderBudget(){
   <div class="alloc">
     <div class="sectit">Annual Budget · ${budget} units to allocate</div>
     ${allocRow("extract","Extraction","Enjoy power now — banked to your score, guaranteed.")}
-    ${allocRow("foreign","Foreign Assets","Spirited abroad — half is lost in transit; the rest is safe for exile.")}
+    ${allocRow("foreign","Foreign Assets","Invested abroad — grows faster, but locked away and yours only if you flee.")}
     ${allocRow("MIL","Military","Guards against Revolution and Intervention.")}
     ${allocRow("POL","Secret Police","Guards against all threats — your sharpest tool.")}
     ${allocRow("ELITE","Elite Patronage","Guards against Coup and Intervention.")}
@@ -1009,7 +1011,7 @@ function commitBudget(){
   const budget=Math.max(1,budgetOf(G.econ));
   const before={dangers:{...G.dangers}, caps:{...G.caps}};
   // apply budget
-  G.score+=alloc.extract; G.foreign+=alloc.foreign*P.foreignDiscount;  // half is lost in transit; the stash holds true value
+  G.score+=alloc.extract; G.foreign+=alloc.foreign*P.foreignMult;  // grows abroad; locked away until you flee
   // capability/investment slices come from the LARGER budget, but feed 0–100 gauges —
   // divide by the multiplier so a given budget SHARE has the same effect as before.
   const toGauge=1/P.budgetMult;
@@ -1134,7 +1136,7 @@ function renderBudgetFeedback(){
   if(a.invest>0) bits.push(`invested <b>${Math.round(a.invest)}</b> in the country`);
   const fed=[]; if(a.MIL>0)fed.push("the army"); if(a.POL>0)fed.push("the secret police"); if(a.ELITE>0)fed.push("the elite");
   if(fed.length) bits.push("fed "+fed.join(", "));
-  if(a.foreign>0) bits.push(`moved <b>${Math.round(a.foreign*P.foreignDiscount)}</b> abroad`);
+  if(a.foreign>0) bits.push(`moved <b>${Math.round(a.foreign*P.foreignMult)}</b> abroad`);
   let narration = bits.length? "You "+bits.join("; ")+"." : "You committed nothing this year.";
   // extraction warning line
   let extractNote="";
@@ -1263,11 +1265,13 @@ function faceChallenge(){
   const t=ch.type;
   const pSurv=logistic(P.survK*(defenseFor(t)-G.dangers[t]));
   // if you've held the danger genuinely low, bad luck cannot end you
-  const survived = pSurv>=P.survFloor ? true : Math.random()<pSurv;
+  const floor = P.graceFloors[G.year] || P.survFloor;  // early-game grace tapers in
+  // floor>=1 means a guaranteed-safe year; otherwise you survive if risk is below the floor
+  const survived = floor>=1 ? true : (pSurv>=floor ? true : Math.random()<pSurv);
   if(survived){
     G.phase="challenge_result"; G.lastChallenge.survived=true; render();
   } else {
-    const claw=Math.max(P.penalty[t], G.score*P.penaltyClawFrac);
+    const claw=P.penalty[t];  // fixed penalty by cause; a flat cost of falling, so long rich reigns are rewarded (no % claw on banked score)
     G.score=Math.max(0,G.score-claw);
     G.phase="end"; G.endReason=t; render();
   }
@@ -1317,7 +1321,7 @@ function renderEnd(){
     <div class="scorecard">
       <div class="score-lab">Final Score · a reign of ${G.year} year${G.year>1?'s':''}</div>
       <div class="score-hero">${reignScore}</div>
-      <div class="score-sub">${r==='exile'?'your foreign fortune, kept in full (half was lost in transit)':'foreign assets forfeited; penalty applied'}</div>
+      <div class="score-sub">${r==='exile'?'your foreign fortune, grown abroad and carried into exile':'foreign assets forfeited; penalty applied'}</div>
     </div>
     <div style="display:flex;gap:12px"><button class="btn" onclick="newGame()">Rule again</button></div>
   </div>
